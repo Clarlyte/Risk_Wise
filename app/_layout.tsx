@@ -1,0 +1,119 @@
+import React from 'react';
+import { View, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
+import { Tabs} from 'expo-router';
+import { TabNavigationState, ParamListBase } from '@react-navigation/native';
+import { FontAwesome5 } from '@expo/vector-icons';
+
+const { width: screenWidth } = Dimensions.get('window');
+
+// Define types for the CustomTabBar props
+interface CustomTabBarProps {
+  state: TabNavigationState<ParamListBase>;
+  descriptors: Record<string, any>;
+  navigation: any;
+}
+
+// Define a type for the route
+interface RouteType {
+  key: string;
+  name: string;
+}
+
+const CustomTabBar: React.FC<CustomTabBarProps> = ({ state, descriptors, navigation }) => {
+  return (
+    <View style={styles.tabBar}>
+      {state.routes.map((route: RouteType, index: number) => {
+        const { options } = descriptors[route.key];
+        const isFocused = state.index === index;
+
+        const onPress = () => {
+          const event = navigation.emit({
+            type: 'tabPress',
+            target: route.key,
+            canPreventDefault: true,
+          });
+
+          if (!isFocused && !event.defaultPrevented) {
+            navigation.navigate(route.name);
+          }
+        };
+
+        let iconName: string;
+        if (route.name === 'index') {
+          iconName = 'chart-bar';
+        } else if (route.name === 'add') {
+          iconName = 'plus';
+        } else if (route.name === 'records') {
+          iconName = 'file-alt';
+        } else {
+          iconName = 'question'; // Default icon
+        }
+
+        return (
+          <TouchableOpacity
+            key={route.key}
+            onPress={onPress}
+            style={[
+              styles.tabItem,
+              { left: (index * screenWidth) / 3 },
+              route.name === 'add' && styles.addButton,
+            ]}
+          >
+            <FontAwesome5 
+              name={iconName} 
+              size={route.name === 'add' ? 24 : 20} 
+              color={route.name === 'add' ? '#1294D5' : (isFocused ? '#1294D5' : '#888888')} 
+            />
+          </TouchableOpacity>
+        );
+      })}
+    </View>
+  );
+};
+
+export default function AppLayout() {
+  return (
+    <Tabs
+      screenOptions={{
+        headerShown: false,
+      }}
+      tabBar={(props) => <CustomTabBar {...props} />}
+    >
+      <Tabs.Screen name="index" />
+      <Tabs.Screen name="add" />
+      <Tabs.Screen name="records" />
+    </Tabs>
+  );
+}
+
+const styles = StyleSheet.create({
+  tabBar: {
+    height: 60,
+    backgroundColor: 'white',
+    borderTopWidth: 1,
+    borderTopColor: '#e0e0e0',
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+  },
+  tabItem: {
+    position: 'absolute',
+    width: screenWidth / 3,
+    height: 60,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  addButton: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    borderWidth: 2,
+    borderColor: '#1294D5',
+    backgroundColor: 'transparent',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: -25,
+    left: (screenWidth - 50) / 2, // Center the add button
+  },
+});
