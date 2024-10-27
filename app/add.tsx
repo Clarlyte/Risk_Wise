@@ -1,40 +1,30 @@
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { Stack, useRouter } from 'expo-router';
+import React from 'react';
+import { View, StyleSheet } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Header } from './components/Header';
 
 export default function AddScreen() {
-  const router = useRouter();
-
-  const handleAddPress = () => {
-    // Navigate to the input flow
-    router.push('/add/input-flow');
+  const handleSettingsPress = () => {
+    console.log('Settings pressed');
   };
 
   return (
-    <View style={styles.container}>
-      <Stack.Screen options={{ title: 'Add Assessment' }} />
-      <TouchableOpacity style={styles.addButton} onPress={handleAddPress}>
-        <Text style={styles.addButtonText}>+</Text>
-      </TouchableOpacity>
-    </View>
+    <SafeAreaView style={styles.safeArea}>
+      <View style={styles.container}>
+        <Header title="Add Assessment" onSettingsPress={handleSettingsPress} />
+        {/* Add your content here */}
+      </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#FC7524',
+  },
   container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  addButton: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: '#007AFF',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  addButtonText: {
-    fontSize: 40,
-    color: 'white',
+    backgroundColor: '#F2F1F9',
   },
 });

@@ -62,7 +62,7 @@ const CustomTabBar: React.FC<CustomTabBarProps> = ({ state, descriptors, navigat
             <FontAwesome5 
               name={iconName} 
               size={route.name === 'add' ? 24 : 20} 
-              color={route.name === 'add' ? '#1294D5' : (isFocused ? '#1294D5' : '#888888')} 
+              color={route.name === 'add' ? 'white' : (isFocused ? '#1294D5' : '#888888')} 
             />
           </TouchableOpacity>
         );
@@ -108,9 +108,7 @@ const styles = StyleSheet.create({
     width: 50,
     height: 50,
     borderRadius: 25,
-    borderWidth: 2,
-    borderColor: '#1294D5',
-    backgroundColor: 'transparent',
+    backgroundColor: '#1294D5',
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: -25,

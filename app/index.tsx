@@ -14,18 +14,24 @@ export default function DashboardScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <Header title="Dashboard" onSettingsPress={handleSettingsPress} textColor="white" />
-      <SearchBar value={searchQuery} onChangeText={setSearchQuery} />
-      <ControlsSection />
-      <HazardsSection searchQuery={searchQuery} />
+    <SafeAreaView style={styles.safeArea}>
+      <View style={styles.container}>
+        <Header title="Dashboard" onSettingsPress={handleSettingsPress} />
+        <SearchBar value={searchQuery} onChangeText={setSearchQuery} />
+        <ControlsSection />
+        <HazardsSection searchQuery={searchQuery} />
+      </View>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  safeArea: {
     flex: 1,
     backgroundColor: '#FC7524',
+  },
+  container: {
+    flex: 1,
+    backgroundColor: '#F2F1F9',
   },
 });
