@@ -5,15 +5,24 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { FontAwesome5 } from '@expo/vector-icons';
 import { Header } from './components/Header';
 import { SearchBar } from './components/SearchBar';
+import { FolderNameDialog } from './components/FolderNameDialog';
 
 interface Folder {
   id: string;
   name: string;
 }
 
+// Add this helper function at the top level
+function validateFolderName(name: string): boolean {
+  return name.trim().length > 0;
+}
+
 export default function RecordsScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const [folders, setFolders] = useState<Folder[]>([]);
+  const [isAddDialogVisible, setIsAddDialogVisible] = useState(false);
+  const [isEditDialogVisible, setIsEditDialogVisible] = useState(false);
+  const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
 
   useEffect(() => {
     loadFolders();
@@ -38,22 +47,30 @@ export default function RecordsScreen() {
     }
   };
 
-  const addFolder = () => {
+  const addFolder = (name: string) => {
     const newFolder: Folder = {
       id: Date.now().toString(),
-      name: `Folder ${folders.length + 1}`,
+      name,
     };
     const updatedFolders = [...folders, newFolder];
     setFolders(updatedFolders);
     saveFolders(updatedFolders);
   };
 
-  const editFolderName = (id: string, newName: string) => {
+  const editFolderName = (id: string) => {
+    setSelectedFolderId(id);
+    setIsEditDialogVisible(true);
+  };
+
+  const handleEditSubmit = (newName: string) => {
+    if (!selectedFolderId) return;
+    
     const updatedFolders = folders.map(folder =>
-      folder.id === id ? { ...folder, name: newName } : folder
+      folder.id === selectedFolderId ? { ...folder, name: newName } : folder
     );
     setFolders(updatedFolders);
     saveFolders(updatedFolders);
+    setSelectedFolderId(null);
   };
 
   const shareFolder = (id: string) => {
@@ -85,7 +102,7 @@ export default function RecordsScreen() {
       <FontAwesome5 name="folder" size={24} color="#1294D5" />
       <Text style={styles.folderName}>{item.name}</Text>
       <View style={styles.folderActions}>
-        <TouchableOpacity onPress={() => editFolderName(item.id, `Edited ${item.name}`)}>
+        <TouchableOpacity onPress={() => editFolderName(item.id)}>
           <FontAwesome5 name="edit" size={20} color="#1294D5" />
         </TouchableOpacity>
         <TouchableOpacity onPress={() => shareFolder(item.id)}>
@@ -114,7 +131,26 @@ export default function RecordsScreen() {
           keyExtractor={item => item.id}
           ListEmptyComponent={<Text style={styles.emptyText}>No folders found</Text>}
         />
-        <TouchableOpacity style={styles.addButton} onPress={addFolder}>
+        
+        <FolderNameDialog
+          visible={isAddDialogVisible}
+          onClose={() => setIsAddDialogVisible(false)}
+          onSubmit={addFolder}
+          title="New Folder"
+        />
+        
+        <FolderNameDialog
+          visible={isEditDialogVisible}
+          onClose={() => setIsEditDialogVisible(false)}
+          onSubmit={handleEditSubmit}
+          initialValue={folders.find(f => f.id === selectedFolderId)?.name}
+          title="Rename Folder"
+        />
+        
+        <TouchableOpacity 
+          style={styles.addButton} 
+          onPress={() => setIsAddDialogVisible(true)}
+        >
           <FontAwesome5 name="plus" size={18} color="white" />
           <Text style={styles.addButtonText}>Add folder</Text>
         </TouchableOpacity>
