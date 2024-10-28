@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
-import { Tabs} from 'expo-router';
+import { Tabs, useRouter } from 'expo-router';
 import { TabNavigationState, ParamListBase } from '@react-navigation/native';
 import { FontAwesome5 } from '@expo/vector-icons';
 
@@ -20,6 +20,8 @@ interface RouteType {
 }
 
 const CustomTabBar: React.FC<CustomTabBarProps> = ({ state, descriptors, navigation }) => {
+  const router = useRouter();
+
   return (
     <View style={styles.tabBar}>
       {state.routes.map((route: RouteType, index: number) => {
@@ -27,6 +29,12 @@ const CustomTabBar: React.FC<CustomTabBarProps> = ({ state, descriptors, navigat
         const isFocused = state.index === index;
 
         const onPress = () => {
+          // If add button is pressed, go directly to activity screen
+          if (route.name === 'add') {
+            router.push('/add/activity');
+            return;
+          }
+
           const event = navigation.emit({
             type: 'tabPress',
             target: route.key,

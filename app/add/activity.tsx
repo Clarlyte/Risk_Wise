@@ -1,53 +1,60 @@
 import React, { useState } from 'react';
 import { View, TextInput, StyleSheet } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
-import { NavigationButtons } from '../components/NavigationButtons';
-import { WorkActivity } from '../types/risk';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Header } from '../components/Header';
+import { StepNavigationButtons } from '../components/StepNavigationButtons';
 
 export default function ActivityScreen() {
   const router = useRouter();
-  const [activity, setActivity] = useState<string>('');
+  const [activity, setActivity] = useState('');
 
   const handleContinue = () => {
     if (!activity.trim()) return;
-
-    const workActivity: WorkActivity = {
-      id: Date.now().toString(),
-      description: activity.trim(),
-      hazards: [],
-    };
-
+    
     router.push({
       pathname: '/add/hazards',
-      params: { activity: JSON.stringify(workActivity) }
+      params: { 
+        activity: activity.trim()
+      }
     });
   };
 
   return (
-    <View style={styles.container}>
-      <Stack.Screen options={{ title: 'Work Activity' }} />
-      <View style={styles.content}>
-        <TextInput
-          style={styles.input}
-          placeholder="Describe the work activity"
-          value={activity}
-          onChangeText={setActivity}
-          multiline
-          numberOfLines={4}
+    <SafeAreaView style={styles.safeArea}>
+      <View style={styles.container}>
+        <Stack.Screen options={{ headerShown: false }} />
+        <Header title="Work Activity" onSettingsPress={() => {}} />
+        
+        <View style={styles.content}>
+          <TextInput
+            style={styles.input}
+            placeholder="Describe the work activity"
+            value={activity}
+            onChangeText={setActivity}
+            multiline
+            numberOfLines={4}
+          />
+        </View>
+
+        <StepNavigationButtons
+          onContinue={handleContinue}
+          isFirstStep
+          continueDisabled={!activity.trim()}
         />
       </View>
-      <NavigationButtons
-        onBack={() => router.back()}
-        onContinue={handleContinue}
-      />
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#FC7524',
+  },
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#F2F1F9',
   },
   content: {
     flex: 1,
@@ -59,6 +66,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 12,
     minHeight: 100,
+    backgroundColor: 'white',
     textAlignVertical: 'top',
   },
 });
