@@ -115,7 +115,7 @@ export default function RecordsScreen() {
           ListEmptyComponent={<Text style={styles.emptyText}>No folders found</Text>}
         />
         <TouchableOpacity style={styles.addButton} onPress={addFolder}>
-          <FontAwesome5 name="plus" size={24} color="white" />
+          <FontAwesome5 name="plus" size={18} color="white" />
           <Text style={styles.addButtonText}>Add folder</Text>
         </TouchableOpacity>
       </View>
@@ -164,10 +164,10 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: 20,
     bottom: 80, // Increased to account for the footer
-    backgroundColor: '#1294D5',
+    backgroundColor: '#FC7524',
     paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 30,
+    paddingHorizontal: 10,
+    borderRadius: 15,
     flexDirection: 'row',
     alignItems: 'center',
     elevation: 5,
@@ -175,7 +175,7 @@ const styles = StyleSheet.create({
   addButtonText: {
     color: 'white',
     marginLeft: 10,
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: 'bold',
   },
 });

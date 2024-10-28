@@ -61,7 +61,7 @@ const CustomTabBar: React.FC<CustomTabBarProps> = ({ state, descriptors, navigat
           >
             <FontAwesome5 
               name={iconName} 
-              size={route.name === 'add' ? 24 : 20} 
+              size={route.name === 'add' ? 25 : 30} 
               color={route.name === 'add' ? 'white' : (isFocused ? '#1294D5' : '#888888')} 
             />
           </TouchableOpacity>
@@ -88,7 +88,7 @@ export default function AppLayout() {
 
 const styles = StyleSheet.create({
   tabBar: {
-    height: 60,
+    height: 65,
     backgroundColor: 'white',
     borderTopWidth: 1,
     borderTopColor: '#e0e0e0',
@@ -105,9 +105,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   addButton: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
     backgroundColor: '#1294D5',
     justifyContent: 'center',
     alignItems: 'center',
