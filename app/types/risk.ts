@@ -1,21 +1,19 @@
+export interface Effect {
+  id: string;
+  description: string;
+}
+
+export interface Control {
+  id: string;
+  description: string;
+}
+
 export interface Hazard {
   id: string;
   description: string;
-  effects: string;
-  existingControls: string;
   images: string[];
-  likelihood: number;
-  severity: number;
-  riskScore: number;
-  additionalControls: {
-    ac: string[];
-    ec: string[];
-    ppe: string[];
-  };
-  pointPerson: string;
-  finalLikelihood?: number;
-  finalSeverity?: number;
-  finalRiskScore?: number;
+  effects?: Effect[];
+  existingControls?: Control[];
 }
 
 export interface WorkActivity {

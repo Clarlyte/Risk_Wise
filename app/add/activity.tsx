@@ -3,20 +3,20 @@ import { View, TextInput, ScrollView, Text, TouchableOpacity, StyleSheet } from 
 import { Stack, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Header } from '../components/Header';
-import { StepNavigationButtons } from '../components/StepNavigationButtons';
+import { BottomNavigation } from '../components/BottomNavigation';
 import { CustomDropdown } from '../components/CustomDropdown';
+import { Hazard, Effect, Control } from '../types/risk';
 
-interface Hazard {
-  id: string;
-  description: string;
-  images: string[];
+interface HazardWithEffects extends Hazard {
+  effects: Effect[];
+  existingControls: Control[];
 }
 
 export default function ActivityHazardScreen() {
   const router = useRouter();
   const [activity, setActivity] = useState('');
   const [customActivity, setCustomActivity] = useState('');
-  const [hazards, setHazards] = useState<Hazard[]>([]);
+  const [hazards, setHazards] = useState<HazardWithEffects[]>([]);
   const [selectedHazard, setSelectedHazard] = useState('');
   const [customHazard, setCustomHazard] = useState('');
 
@@ -55,10 +55,12 @@ export default function ActivityHazardScreen() {
   };
 
   const handleAddHazard = ({ description, images }: { description: string; images: string[] }) => {
-    const newHazard: Hazard = {
+    const newHazard: HazardWithEffects = {
       id: Date.now().toString(),
       description,
       images,
+      effects: [],
+      existingControls: [],
     };
     setHazards([...hazards, newHazard]);
     setCustomHazard('');
@@ -93,72 +95,88 @@ export default function ActivityHazardScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={[styles.safeArea, { paddingBottom: 80 }]}>
       <View style={styles.container}>
         <Stack.Screen options={{ headerShown: false }} />
         <Header title="Activity & Hazards" onSettingsPress={() => {}} />
         
-        <ScrollView style={styles.content}>
-          <View style={styles.section}>
-            <CustomDropdown
-              label="Select Work Activity"
-              data={activityOptions}
-              value={activity}
-              onChange={handleActivityChange}
-            />
-
-            {activity === 'custom' && (
-              <TextInput
-                style={styles.input}
-                placeholder="Enter custom work activity"
-                value={customActivity}
-                onChangeText={setCustomActivity}
-                multiline
-                numberOfLines={4}
-              />
-            )}
-          </View>
-
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Identified Hazards</Text>
-            {hazards.map((hazard) => (
-              <View key={hazard.id} style={styles.hazardItem}>
-                <Text style={styles.hazardText}>{hazard.description}</Text>
-              </View>
-            ))}
-
-            <CustomDropdown
-              label="Add Hazard"
-              data={hazardOptions}
-              value={selectedHazard}
-              onChange={handleHazardChange}
-            />
-
-            {selectedHazard === 'custom' && (
-              <View style={styles.customHazardInput}>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Describe the hazard"
-                  value={customHazard}
-                  onChangeText={setCustomHazard}
-                  multiline
+        <View style={styles.scrollContainer}>
+          <ScrollView style={styles.content}>
+            {/* Activity Section */}
+            <View style={styles.inputSection}>
+              <Text style={styles.sectionTitle}>Work Activity</Text>
+              <View style={styles.inputContainer}>
+                <CustomDropdown
+                  label="Select Work Activity"
+                  data={activityOptions}
+                  value={activity}
+                  onChange={handleActivityChange}
                 />
-                <TouchableOpacity
-                  style={styles.addButton}
-                  onPress={handleCustomHazardSave}
-                >
-                  <Text style={styles.addButtonText}>Add Hazard</Text>
-                </TouchableOpacity>
-              </View>
-            )}
-          </View>
-        </ScrollView>
 
-        <StepNavigationButtons
+                {activity === 'custom' && (
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Enter custom work activity"
+                    value={customActivity}
+                    onChangeText={setCustomActivity}
+                    multiline
+                    numberOfLines={4}
+                  />
+                )}
+              </View>
+            </View>
+
+            {/* Hazards Section */}
+            <View style={styles.inputSection}>
+              <Text style={styles.sectionTitle}>Identified Hazards</Text>
+              <View style={styles.inputContainer}>
+                {hazards.map((hazard) => (
+                  <View key={hazard.id} style={styles.itemContainer}>
+                    <Text style={styles.itemText}>{hazard.description}</Text>
+                    <TouchableOpacity 
+                      onPress={() => {
+                        setHazards(hazards.filter(h => h.id !== hazard.id));
+                      }}
+                      style={styles.removeButton}
+                    >
+                      <Text style={styles.removeButtonText}>Remove</Text>
+                    </TouchableOpacity>
+                  </View>
+                ))}
+
+                <CustomDropdown
+                  label="Add Hazard"
+                  data={hazardOptions}
+                  value={selectedHazard}
+                  onChange={handleHazardChange}
+                />
+
+                {selectedHazard === 'custom' && (
+                  <View style={styles.customHazardInput}>
+                    <TextInput
+                      style={styles.input}
+                      placeholder="Describe the hazard"
+                      value={customHazard}
+                      onChangeText={setCustomHazard}
+                      multiline
+                    />
+                    <TouchableOpacity
+                      style={styles.addButton}
+                      onPress={handleCustomHazardSave}
+                    >
+                      <Text style={styles.addButtonText}>Add Hazard</Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
+              </View>
+            </View>
+          </ScrollView>
+        </View>
+
+        <BottomNavigation
           onBack={() => router.push('/')}
-          onContinue={handleContinue}
-          continueDisabled={!isFormValid()}
-          isFirstStep
+          onNext={handleContinue}
+          nextDisabled={!isFormValid()}
         />
       </View>
     </SafeAreaView>
@@ -173,19 +191,37 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F2F1F9',
+    position: 'relative',
+  },
+  scrollContainer: {
+    flex: 1,
   },
   content: {
-    flex: 1,
     padding: 16,
+    marginBottom: 80,
   },
-  section: {
+  inputSection: {
     marginBottom: 24,
   },
   sectionTitle: {
     fontSize: 18,
     fontWeight: '600',
-    marginBottom: 16,
+    marginBottom: 12,
     color: '#333',
+    paddingHorizontal: 4,
+  },
+  inputContainer: {
+    backgroundColor: 'white',
+    padding: 16,
+    borderRadius: 8,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 3,
   },
   input: {
     marginTop: 16,
@@ -197,17 +233,30 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
     textAlignVertical: 'top',
   },
-  hazardItem: {
-    backgroundColor: 'white',
-    padding: 16,
+  itemContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: '#f8f8f8',
+    padding: 12,
     borderRadius: 8,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: '#eee',
+    marginBottom: 8,
   },
-  hazardText: {
-    fontSize: 16,
+  itemText: {
+    flex: 1,
+    fontSize: 14,
     color: '#333',
+  },
+  removeButton: {
+    backgroundColor: '#ff4444',
+    padding: 8,
+    borderRadius: 4,
+    marginLeft: 8,
+  },
+  removeButtonText: {
+    color: 'white',
+    fontSize: 12,
+    fontWeight: '600',
   },
   customHazardInput: {
     marginTop: 16,
