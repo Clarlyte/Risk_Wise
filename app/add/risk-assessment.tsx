@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, ScrollView, Text, StyleSheet } from 'react-native';
 import { Stack, useRouter, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -7,6 +7,7 @@ import { StepNavigationButtons } from '../components/StepNavigationButtons';
 import { CustomDropdown } from '../components/CustomDropdown';
 import { HazardWithEffects, HazardWithRisk } from '../types/hazard';
 import { LIKELIHOOD_OPTIONS, SEVERITY_OPTIONS } from '../types/risk';
+import { BottomNavigation } from '../components/BottomNavigation';
 
 export default function RiskAssessmentScreen() {
   const router = useRouter();
@@ -20,6 +21,31 @@ export default function RiskAssessmentScreen() {
       riskScore: 1,
     }));
   });
+
+  useEffect(() => {
+    if (hazardsParam) {
+      const parsedHazards: HazardWithEffects[] = JSON.parse(hazardsParam as string);
+      setHazardsWithRisk(prev => {
+        return parsedHazards.map(newHazard => {
+          const existingHazard = prev.find(h => h.id === newHazard.id);
+          if (existingHazard) {
+            return {
+              ...newHazard,
+              likelihood: existingHazard.likelihood,
+              severity: existingHazard.severity,
+              riskScore: existingHazard.riskScore,
+            };
+          }
+          return {
+            ...newHazard,
+            likelihood: 1,
+            severity: 1,
+            riskScore: 1,
+          };
+        });
+      });
+    }
+  }, [hazardsParam]);
 
   const updateRisk = (id: string, field: 'likelihood' | 'severity', value: number) => {
     setHazardsWithRisk(prev =>
@@ -53,47 +79,62 @@ export default function RiskAssessmentScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={[styles.safeArea, { paddingBottom: 80 }]}>
       <View style={styles.container}>
         <Stack.Screen options={{ headerShown: false }} />
         <Header title="Risk Assessment" onSettingsPress={() => {}} />
         
-        <ScrollView style={styles.content}>
-          {hazardsWithRisk.map((hazard, index) => {
-            const riskLevel = getRiskLevel(hazard.riskScore);
-            return (
-              <View key={hazard.id} style={styles.hazardSection}>
-                <Text style={styles.hazardTitle}>Hazard {index + 1}</Text>
-                <Text style={styles.hazardDescription}>{hazard.description}</Text>
-                
-                <CustomDropdown
-                  label="Likelihood"
-                  data={LIKELIHOOD_OPTIONS}
-                  value={hazard.likelihood}
-                  onChange={(value) => updateRisk(hazard.id, 'likelihood', Number(value))}
-                />
-                
-                <CustomDropdown
-                  label="Severity"
-                  data={SEVERITY_OPTIONS}
-                  value={hazard.severity}
-                  onChange={(value) => updateRisk(hazard.id, 'severity', Number(value))}
-                />
-                
-                <View style={styles.riskScore}>
-                  <Text style={styles.label}>Risk Score: </Text>
-                  <Text style={[styles.score, { color: riskLevel.color }]}>
-                    {hazard.riskScore} - {riskLevel.text}
-                  </Text>
+        <View style={styles.scrollContainer}>
+          <ScrollView style={styles.content}>
+            {hazardsWithRisk.map((hazard, index) => {
+              const riskLevel = getRiskLevel(hazard.riskScore);
+              return (
+                <View key={hazard.id} style={styles.hazardSection}>
+                  <Text style={styles.hazardTitle}>Hazard {index + 1}</Text>
+                  <Text style={styles.hazardDescription}>{hazard.description}</Text>
+                  
+                  <CustomDropdown
+                    label="Likelihood"
+                    data={LIKELIHOOD_OPTIONS}
+                    value={hazard.likelihood}
+                    onChange={(value) => updateRisk(hazard.id, 'likelihood', Number(value))}
+                  />
+                  
+                  <CustomDropdown
+                    label="Severity"
+                    data={SEVERITY_OPTIONS}
+                    value={hazard.severity}
+                    onChange={(value) => updateRisk(hazard.id, 'severity', Number(value))}
+                  />
+                  
+                  <View style={styles.riskScore}>
+                    <Text style={styles.label}>Risk Score: </Text>
+                    <Text style={[styles.score, { color: riskLevel.color }]}>
+                      {hazard.riskScore} - {riskLevel.text}
+                    </Text>
+                  </View>
                 </View>
-              </View>
-            );
-          })}
-        </ScrollView>
+              );
+            })}
+          </ScrollView>
+        </View>
 
-        <StepNavigationButtons
-          onBack={() => router.back()}
-          onContinue={handleContinue}
+        <BottomNavigation
+          onBack={() => router.push({
+            pathname: '/add/effects',
+            params: {
+              activity,
+              hazards: JSON.stringify(hazardsWithRisk),
+            }
+          })}
+          onNext={() => router.push({
+            pathname: '/add/controls',
+            params: {
+              activity,
+              hazards: JSON.stringify(hazardsWithRisk),
+            }
+          })}
+          nextDisabled={!hazardsWithRisk.length}
         />
       </View>
     </SafeAreaView>
@@ -109,9 +150,12 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#F2F1F9',
   },
-  content: {
+  scrollContainer: {
     flex: 1,
+  },
+  content: {
     padding: 16,
+    marginBottom: 80,
   },
   hazardSection: {
     backgroundColor: 'white',
