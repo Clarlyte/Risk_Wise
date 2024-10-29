@@ -6,18 +6,28 @@ import { FontAwesome5 } from '@expo/vector-icons';
 import { Header } from './components/Header';
 import { SearchBar } from './components/SearchBar';
 import { FolderNameDialog } from './components/FolderNameDialog';
+import { useRouter } from 'expo-router';
 
 interface Folder {
   id: string;
   name: string;
 }
 
-// Add this helper function at the top level
+interface Assessment {
+  id: string;
+  name: string;
+  date: string;
+  activity: string;
+  hazards: any[];
+  folderId: string;
+}
+
 function validateFolderName(name: string): boolean {
   return name.trim().length > 0;
 }
 
 export default function RecordsScreen() {
+  const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
   const [folders, setFolders] = useState<Folder[]>([]);
   const [isAddDialogVisible, setIsAddDialogVisible] = useState(false);
@@ -74,7 +84,6 @@ export default function RecordsScreen() {
   };
 
   const shareFolder = (id: string) => {
-    // Implement sharing functionality here
     Alert.alert('Share', 'Sharing functionality to be implemented');
   };
 
@@ -124,14 +133,24 @@ export default function RecordsScreen() {
       <View style={styles.container}>
         <Header title="Records" onSettingsPress={() => {}} />
         <SearchBar value={searchQuery} onChangeText={setSearchQuery} />
+
         <FlatList
           style={styles.list}
           data={filteredFolders}
-          renderItem={renderFolderItem}
+          renderItem={({ item }) => (
+            <TouchableOpacity 
+              onPress={() => router.push({
+                pathname: '/records/folder',
+                params: { folderId: item.id, folderName: item.name }
+              })}
+            >
+              {renderFolderItem({ item })}
+            </TouchableOpacity>
+          )}
           keyExtractor={item => item.id}
           ListEmptyComponent={<Text style={styles.emptyText}>No folders found</Text>}
         />
-        
+
         <FolderNameDialog
           visible={isAddDialogVisible}
           onClose={() => setIsAddDialogVisible(false)}
@@ -146,7 +165,7 @@ export default function RecordsScreen() {
           initialValue={folders.find(f => f.id === selectedFolderId)?.name}
           title="Rename Folder"
         />
-        
+
         <TouchableOpacity 
           style={styles.addButton} 
           onPress={() => setIsAddDialogVisible(true)}
@@ -199,7 +218,7 @@ const styles = StyleSheet.create({
   addButton: {
     position: 'absolute',
     right: 20,
-    bottom: 80, // Increased to account for the footer
+    bottom: 80,
     backgroundColor: '#FC7524',
     paddingVertical: 10,
     paddingHorizontal: 10,
