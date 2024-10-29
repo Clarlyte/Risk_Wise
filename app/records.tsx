@@ -8,6 +8,7 @@ import { SearchBar } from './components/SearchBar';
 import { FolderNameDialog } from './components/FolderNameDialog';
 import { useRouter } from 'expo-router';
 import { useFolders } from './contexts/FolderContext';
+import { useFocusEffect } from '@react-navigation/native';
 
 interface Folder {
   id: string;
@@ -33,10 +34,23 @@ export default function RecordsScreen() {
   const [isAddDialogVisible, setIsAddDialogVisible] = useState(false);
   const [isEditDialogVisible, setIsEditDialogVisible] = useState(false);
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
-  const { folders, addFolder, deleteFolder, updateFolder } = useFolders();
+  const { folders, addFolder, deleteFolder, updateFolder, loadFolders } = useFolders();
 
-  const handleAddFolder = (name: string) => {
-    addFolder(name);
+  // Reload folders when screen comes into focus
+  useFocusEffect(
+    React.useCallback(() => {
+      loadFolders();
+    }, [])
+  );
+
+  // Add an effect to reload folders when they change
+  useEffect(() => {
+    loadFolders();
+  }, [folders]); // This will trigger when folders state changes
+
+  const handleAddFolder = async (name: string) => {
+    await addFolder(name);
+    loadFolders(); // Reload immediately after adding
   };
 
   const handleEditSubmit = (newName: string) => {
@@ -45,7 +59,7 @@ export default function RecordsScreen() {
     setSelectedFolderId(null);
   };
 
-  const handleDeleteFolder = (id: string) => {
+  const handleDeleteFolder = async (id: string) => {
     Alert.alert(
       'Delete Folder',
       'Are you sure you want to delete this folder?',
@@ -54,7 +68,10 @@ export default function RecordsScreen() {
         {
           text: 'Delete',
           style: 'destructive',
-          onPress: () => deleteFolder(id),
+          onPress: async () => {
+            await deleteFolder(id);
+            loadFolders(); // Reload immediately after deletion
+          },
         },
       ]
     );

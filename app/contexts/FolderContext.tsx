@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface Folder {
@@ -19,11 +19,7 @@ const FolderContext = createContext<FolderContextType | undefined>(undefined);
 export function FolderProvider({ children }: { children: React.ReactNode }) {
   const [folders, setFolders] = useState<Folder[]>([]);
 
-  useEffect(() => {
-    loadFolders();
-  }, []);
-
-  const loadFolders = async () => {
+  const loadFolders = useCallback(async () => {
     try {
       const storedFolders = await AsyncStorage.getItem('folders');
       if (storedFolders) {
@@ -32,7 +28,7 @@ export function FolderProvider({ children }: { children: React.ReactNode }) {
     } catch (error) {
       console.error('Error loading folders:', error);
     }
-  };
+  }, []);
 
   const saveFolders = async (updatedFolders: Folder[]) => {
     try {

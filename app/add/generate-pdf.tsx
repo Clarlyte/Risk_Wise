@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert } from 'react-native';
-import { Stack, useRouter, useLocalSearchParams } from 'expo-router';
+import { Stack, useRouter, useLocalSearchParams, useFocusEffect } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Header } from '../components/Header';
@@ -8,6 +8,7 @@ import { BottomNavigation } from '../components/BottomNavigation';
 import { CustomDropdown } from '../components/CustomDropdown';
 import { FolderNameDialog } from '../components/FolderNameDialog';
 import { FontAwesome5 } from '@expo/vector-icons';
+import { useFolders } from '../contexts/FolderContext';
 
 interface Folder {
   id: string;
@@ -19,7 +20,7 @@ interface Assessment {
   name: string;
   date: string;
   activity: string;
-  hazards: any[]; // Replace with your proper hazard type
+  hazards: any[];
   folderId: string;
 }
 
@@ -28,38 +29,24 @@ export default function GeneratePDFScreen() {
   const { activity, hazards: hazardsParam } = useLocalSearchParams();
   const [assessmentName, setAssessmentName] = useState('');
   const [selectedFolderId, setSelectedFolderId] = useState('');
-  const [folders, setFolders] = useState<Folder[]>([]);
+  const { folders, addFolder, loadFolders } = useFolders();
   const [isAddFolderVisible, setIsAddFolderVisible] = useState(false);
 
-  // Load folders on mount
+  useFocusEffect(
+    React.useCallback(() => {
+      loadFolders();
+    }, [loadFolders])
+  );
+
   useEffect(() => {
-    loadFolders();
-  }, []);
-
-  const loadFolders = async () => {
-    try {
-      const storedFolders = await AsyncStorage.getItem('folders');
-      if (storedFolders) {
-        setFolders(JSON.parse(storedFolders));
-      }
-    } catch (error) {
-      console.error('Error loading folders:', error);
+    if (selectedFolderId && !folders.some(f => f.id === selectedFolderId)) {
+      setSelectedFolderId('');
     }
-  };
+  }, [folders, selectedFolderId]);
 
-  const addFolder = async (name: string) => {
-    const newFolder: Folder = {
-      id: Date.now().toString(),
-      name,
-    };
-    const updatedFolders = [...folders, newFolder];
-    try {
-      await AsyncStorage.setItem('folders', JSON.stringify(updatedFolders));
-      setFolders(updatedFolders);
-      setSelectedFolderId(newFolder.id);
-    } catch (error) {
-      console.error('Error saving folder:', error);
-    }
+  const handleAddFolder = async (name: string) => {
+    const newFolder = await addFolder(name);
+    setSelectedFolderId(newFolder.id);
   };
 
   const saveAssessment = async () => {
@@ -74,7 +61,6 @@ export default function GeneratePDFScreen() {
     }
 
     try {
-      // Create assessment object
       const assessment: Assessment = {
         id: Date.now().toString(),
         name: assessmentName.trim(),
@@ -84,29 +70,24 @@ export default function GeneratePDFScreen() {
         folderId: selectedFolderId,
       };
 
-      // Get existing assessments
       const storedAssessments = await AsyncStorage.getItem('assessments');
       const assessments: Assessment[] = storedAssessments 
         ? JSON.parse(storedAssessments)
         : [];
 
-      // Add new assessment
       const updatedAssessments = [...assessments, assessment];
       await AsyncStorage.setItem('assessments', JSON.stringify(updatedAssessments));
 
-      // Generate PDF here (implement PDF generation logic)
-      // You can use libraries like react-native-html-to-pdf
-
-      Alert.alert(
-        'Success',
-        'Assessment saved successfully',
-        [
-          {
-            text: 'OK',
-            onPress: () => router.push('/records')
-          }
-        ]
-      );
+      Alert.alert('Success', 'Assessment saved successfully', [
+        {
+          text: 'OK',
+          onPress: () => {
+            setAssessmentName('');
+            setSelectedFolderId('');
+            router.push('/records');
+          },
+        },
+      ]);
     } catch (error) {
       console.error('Error saving assessment:', error);
       Alert.alert('Error', 'Failed to save assessment');
@@ -164,7 +145,7 @@ export default function GeneratePDFScreen() {
         <FolderNameDialog
           visible={isAddFolderVisible}
           onClose={() => setIsAddFolderVisible(false)}
-          onSubmit={addFolder}
+          onSubmit={handleAddFolder}
           title="New Folder"
         />
 
