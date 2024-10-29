@@ -1,18 +1,24 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { FontAwesome } from '@expo/vector-icons';
+import { FontAwesome5 } from '@expo/vector-icons';
 
 interface HeaderProps {
   title: string;
   onSettingsPress: () => void;
+  onBackPress?: () => void;
 }
 
-export function Header({ title, onSettingsPress }: HeaderProps) {
+export function Header({ title, onSettingsPress, onBackPress }: HeaderProps) {
   return (
     <View style={styles.header}>
+      {onBackPress && (
+        <TouchableOpacity onPress={onBackPress} style={styles.backButton}>
+          <FontAwesome5 name="arrow-left" size={20} color="white" />
+        </TouchableOpacity>
+      )}
       <Text style={styles.title}>{title}</Text>
       <TouchableOpacity onPress={onSettingsPress}>
-        <FontAwesome name="gear" size={24} color="white" />
+        <FontAwesome5 name="cog" size={20} color="white" />
       </TouchableOpacity>
     </View>
   );
@@ -30,5 +36,8 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: 'bold',
     color: 'white',
+  },
+  backButton: {
+    marginRight: 16,
   },
 });
