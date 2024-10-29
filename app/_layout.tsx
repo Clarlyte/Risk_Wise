@@ -29,9 +29,9 @@ const CustomTabBar: React.FC<CustomTabBarProps> = ({ state, descriptors, navigat
         const isFocused = state.index === index;
 
         const onPress = () => {
-          // If add button is pressed, go directly to activity screen
+          // Update this section
           if (route.name === 'add') {
-            router.push('/add/activity');
+            router.push('/add/activity');  // Update the path
             return;
           }
 
