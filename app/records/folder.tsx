@@ -5,6 +5,7 @@ import { Stack, useRouter, useLocalSearchParams } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { FontAwesome5 } from '@expo/vector-icons';
 import { Header } from '../components/Header';
+import { useFocusEffect } from '@react-navigation/native';
 
 interface Assessment {
   id: string;
@@ -20,9 +21,11 @@ export default function FolderScreen() {
   const { folderId, folderName } = useLocalSearchParams();
   const [assessments, setAssessments] = useState<Assessment[]>([]);
 
-  useEffect(() => {
-    loadAssessments();
-  }, []);
+  useFocusEffect(
+    React.useCallback(() => {
+      loadAssessments();
+    }, [])
+  );
 
   const loadAssessments = async () => {
     try {

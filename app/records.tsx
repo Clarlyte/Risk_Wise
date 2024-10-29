@@ -7,6 +7,7 @@ import { Header } from './components/Header';
 import { SearchBar } from './components/SearchBar';
 import { FolderNameDialog } from './components/FolderNameDialog';
 import { useRouter } from 'expo-router';
+import { useFolders } from './contexts/FolderContext';
 
 interface Folder {
   id: string;
@@ -29,65 +30,22 @@ function validateFolderName(name: string): boolean {
 export default function RecordsScreen() {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
-  const [folders, setFolders] = useState<Folder[]>([]);
   const [isAddDialogVisible, setIsAddDialogVisible] = useState(false);
   const [isEditDialogVisible, setIsEditDialogVisible] = useState(false);
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
+  const { folders, addFolder, deleteFolder, updateFolder } = useFolders();
 
-  useEffect(() => {
-    loadFolders();
-  }, []);
-
-  const loadFolders = async () => {
-    try {
-      const storedFolders = await AsyncStorage.getItem('folders');
-      if (storedFolders) {
-        setFolders(JSON.parse(storedFolders));
-      }
-    } catch (error) {
-      console.error('Error loading folders:', error);
-    }
-  };
-
-  const saveFolders = async (updatedFolders: Folder[]) => {
-    try {
-      await AsyncStorage.setItem('folders', JSON.stringify(updatedFolders));
-    } catch (error) {
-      console.error('Error saving folders:', error);
-    }
-  };
-
-  const addFolder = (name: string) => {
-    const newFolder: Folder = {
-      id: Date.now().toString(),
-      name,
-    };
-    const updatedFolders = [...folders, newFolder];
-    setFolders(updatedFolders);
-    saveFolders(updatedFolders);
-  };
-
-  const editFolderName = (id: string) => {
-    setSelectedFolderId(id);
-    setIsEditDialogVisible(true);
+  const handleAddFolder = (name: string) => {
+    addFolder(name);
   };
 
   const handleEditSubmit = (newName: string) => {
     if (!selectedFolderId) return;
-    
-    const updatedFolders = folders.map(folder =>
-      folder.id === selectedFolderId ? { ...folder, name: newName } : folder
-    );
-    setFolders(updatedFolders);
-    saveFolders(updatedFolders);
+    updateFolder(selectedFolderId, newName);
     setSelectedFolderId(null);
   };
 
-  const shareFolder = (id: string) => {
-    Alert.alert('Share', 'Sharing functionality to be implemented');
-  };
-
-  const deleteFolder = (id: string) => {
+  const handleDeleteFolder = (id: string) => {
     Alert.alert(
       'Delete Folder',
       'Are you sure you want to delete this folder?',
@@ -96,14 +54,19 @@ export default function RecordsScreen() {
         {
           text: 'Delete',
           style: 'destructive',
-          onPress: () => {
-            const updatedFolders = folders.filter(folder => folder.id !== id);
-            setFolders(updatedFolders);
-            saveFolders(updatedFolders);
-          },
+          onPress: () => deleteFolder(id),
         },
       ]
     );
+  };
+
+  const shareFolder = (id: string) => {
+    Alert.alert('Share', 'Sharing functionality to be implemented');
+  };
+
+  const editFolderName = (id: string) => {
+    setSelectedFolderId(id);
+    setIsEditDialogVisible(true);
   };
 
   const renderFolderItem = ({ item }: { item: Folder }) => (
@@ -117,7 +80,7 @@ export default function RecordsScreen() {
         <TouchableOpacity onPress={() => shareFolder(item.id)}>
           <FontAwesome5 name="share-alt" size={20} color="#1294D5" />
         </TouchableOpacity>
-        <TouchableOpacity onPress={() => deleteFolder(item.id)}>
+        <TouchableOpacity onPress={() => handleDeleteFolder(item.id)}>
           <FontAwesome5 name="trash-alt" size={20} color="#1294D5" />
         </TouchableOpacity>
       </View>
@@ -154,7 +117,7 @@ export default function RecordsScreen() {
         <FolderNameDialog
           visible={isAddDialogVisible}
           onClose={() => setIsAddDialogVisible(false)}
-          onSubmit={addFolder}
+          onSubmit={handleAddFolder}
           title="New Folder"
         />
         
