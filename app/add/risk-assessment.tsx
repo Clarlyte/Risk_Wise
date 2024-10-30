@@ -3,11 +3,11 @@ import { View, ScrollView, Text, StyleSheet } from 'react-native';
 import { Stack, useRouter, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Header } from '../components/Header';
-import { StepNavigationButtons } from '../components/StepNavigationButtons';
 import { CustomDropdown } from '../components/CustomDropdown';
 import { HazardWithEffects, HazardWithRisk } from '../types/hazard';
 import { LIKELIHOOD_OPTIONS, SEVERITY_OPTIONS } from '../types/risk';
 import { BottomNavigation } from '../components/BottomNavigation';
+import { useAssessment } from '../contexts/AssessmentContext';
 
 export default function RiskAssessmentScreen() {
   const router = useRouter();
@@ -68,7 +68,13 @@ export default function RiskAssessmentScreen() {
     return { text: 'Immediately Dangerous', color: '#F44336' };
   };
 
-  const handleContinue = () => {
+  const handleNext = async () => {
+    await saveTempAssessment({
+      activity,
+      hazardsWithRisk,
+      step: 'riskAssessment'
+    });
+    
     router.push({
       pathname: '/add/controls',
       params: {
@@ -120,22 +126,11 @@ export default function RiskAssessmentScreen() {
         </View>
 
         <BottomNavigation
-          nextLabel="Next"
-          onBack={() => router.push({
-            pathname: '/add/effects',
-            params: {
-              activity,
-              hazards: JSON.stringify(hazardsWithRisk),
-            }
-          })}
-          onNext={() => router.push({
-            pathname: '/add/controls',
-            params: {
-              activity,
-              hazards: JSON.stringify(hazardsWithRisk),
-            }
-          })}
-          nextDisabled={!hazardsWithRisk.length}
+          onBack={() => router.push('/add/effects')}
+          onNext={handleNext}
+          nextDisabled={!hazardsWithRisk.every(
+            hazard => hazard.likelihood > 0 && hazard.severity > 0
+          )}
         />
       </View>
     </SafeAreaView>

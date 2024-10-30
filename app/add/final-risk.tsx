@@ -7,6 +7,7 @@ import { BottomNavigation } from '../components/BottomNavigation';
 import { HazardWithControls } from '../types/hazard';
 import { CustomDropdown } from '../components/CustomDropdown';
 import { LIKELIHOOD_OPTIONS, SEVERITY_OPTIONS } from '../types/risk';
+import { useAssessment } from '../contexts/AssessmentContext';
 
 interface HazardWithFinalRisk extends HazardWithControls {
   finalLikelihood: number;
@@ -17,6 +18,7 @@ interface HazardWithFinalRisk extends HazardWithControls {
 export default function FinalRiskScreen() {
   const router = useRouter();
   const { activity, hazards: hazardsParam } = useLocalSearchParams();
+  const { saveTempAssessment } = useAssessment();
   
   const [hazardsWithFinalRisk, setHazardsWithFinalRisk] = useState<HazardWithFinalRisk[]>(() => {
     const parsedHazards: HazardWithControls[] = JSON.parse(hazardsParam as string);
@@ -62,7 +64,13 @@ export default function FinalRiskScreen() {
     return { text: 'Immediately Dangerous', color: '#F44336' };
   };
 
-  const handleContinue = () => {
+  const handleNext = async () => {
+    await saveTempAssessment({
+      activity,
+      hazardsWithFinalRisk,
+      step: 'finalRisk'
+    });
+    
     router.push({
       pathname: '/add/generate-pdf',
       params: {
@@ -142,16 +150,11 @@ export default function FinalRiskScreen() {
         </View>
 
         <BottomNavigation
-          onBack={() => router.push({
-            pathname: '/add/controls',
-            params: {
-              activity,
-              hazards: JSON.stringify(hazardsWithFinalRisk),
-            }
-          })}
-          onNext={handleContinue}
-          nextDisabled={!hazardsWithFinalRisk.length}
-          nextLabel="Finish"
+          onBack={() => router.push('/add/controls')}
+          onNext={handleNext}
+          nextDisabled={!hazardsWithFinalRisk.every(
+            hazard => hazard.finalLikelihood > 0 && hazard.finalSeverity > 0
+          )}
         />
       </View>
     </SafeAreaView>

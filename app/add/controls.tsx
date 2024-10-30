@@ -7,6 +7,7 @@ import { BottomNavigation } from '../components/BottomNavigation';
 import { CustomDropdown } from '../components/CustomDropdown';
 import { HazardWithRisk } from '../types/hazard';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import { useAssessment } from '../contexts/AssessmentContext';
 
 interface HazardWithControls extends HazardWithRisk {
   additionalControls: {
@@ -34,6 +35,7 @@ function initializeHazards(hazards: HazardWithRisk[]): HazardWithControls[] {
 export default function ControlsScreen() {
   const router = useRouter();
   const { activity, hazards: hazardsParam } = useLocalSearchParams();
+  const { saveTempAssessment } = useAssessment();
   
   const [hazardsWithControls, setHazardsWithControls] = useState<HazardWithControls[]>(() => {
     const parsedHazards: HazardWithRisk[] = JSON.parse(hazardsParam as string);
@@ -212,6 +214,22 @@ export default function ControlsScreen() {
         return hazard;
       })
     );
+  };
+
+  const handleNext = async () => {
+    await saveTempAssessment({
+      activity,
+      hazardsWithControls,
+      step: 'controls'
+    });
+    
+    router.push({
+      pathname: '/add/final-risk',
+      params: {
+        activity,
+        hazards: JSON.stringify(hazardsWithControls),
+      },
+    });
   };
 
   return (
@@ -416,20 +434,8 @@ export default function ControlsScreen() {
         </View>
 
         <BottomNavigation
-          onBack={() => router.push({
-            pathname: '/add/risk-assessment',
-            params: {
-              activity,
-              hazards: JSON.stringify(hazardsWithControls),
-            }
-          })}
-          onNext={() => router.push({
-            pathname: '/add/final-risk',
-            params: {
-              activity,
-              hazards: JSON.stringify(hazardsWithControls),
-            }
-          })}
+          onBack={() => router.push('/add/risk-assessment')}
+          onNext={handleNext}
           nextDisabled={!hazardsWithControls.every(
             hazard => 
               hazard.pointPerson.trim() && 

@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, TouchableOpacity, Text, StyleSheet } from 'react-native';
+import { FontAwesome5 } from '@expo/vector-icons';
 
 interface BottomNavigationProps {
   onBack?: () => void;
@@ -9,7 +10,13 @@ interface BottomNavigationProps {
   nextIcon?: string;
 }
 
-export function BottomNavigation({ onBack, onNext, nextDisabled, nextLabel, nextIcon }: BottomNavigationProps) {
+export function BottomNavigation({ 
+  onBack, 
+  onNext, 
+  nextDisabled, 
+  nextLabel = 'Next',
+  nextIcon 
+}: BottomNavigationProps) {
   return (
     <View style={styles.navigationContainer}>
       {onBack && (
@@ -20,17 +27,29 @@ export function BottomNavigation({ onBack, onNext, nextDisabled, nextLabel, next
           <Text style={styles.backButtonText}>Back</Text>
         </TouchableOpacity>
       )}
-      <TouchableOpacity 
-        style={[
-          styles.navigationButton, 
-          styles.nextButton,
-          nextDisabled && styles.disabledButton
-        ]} 
-        onPress={onNext}
-        disabled={nextDisabled}
-      >
-        <Text style={styles.nextButtonText}>{nextLabel}</Text>
-      </TouchableOpacity>
+      {onNext && (
+        <TouchableOpacity 
+          style={[
+            styles.navigationButton, 
+            styles.nextButton,
+            nextDisabled && styles.disabledButton
+          ]} 
+          onPress={onNext}
+          disabled={nextDisabled}
+        >
+          <Text style={styles.nextButtonText}>
+            {nextLabel}
+          </Text>
+          {nextIcon && (
+            <FontAwesome5 
+              name={nextIcon} 
+              size={16} 
+              color="white" 
+              style={styles.nextIcon}
+            />
+          )}
+        </TouchableOpacity>
+      )}
     </View>
   );
 }
@@ -42,6 +61,7 @@ const styles = StyleSheet.create({
     padding: 16,
     borderTopWidth: 1,
     borderTopColor: '#E5E5E5',
+    backgroundColor: 'white',
     position: 'absolute',
     bottom: 0,
     left: 0,
@@ -54,6 +74,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 8,
     alignItems: 'center',
     justifyContent: 'center',
+    flexDirection: 'row',
   },
   backButton: {
     backgroundColor: 'white',
@@ -75,5 +96,8 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 16,
     fontWeight: '600',
+  },
+  nextIcon: {
+    marginLeft: 8,
   },
 }); 
