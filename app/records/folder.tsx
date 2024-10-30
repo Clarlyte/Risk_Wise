@@ -5,6 +5,7 @@ import { Stack, useRouter, useLocalSearchParams } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { FontAwesome5 } from '@expo/vector-icons';
 import { Header } from '../components/Header';
+import { SearchBar } from '../components/SearchBar';
 import { useFocusEffect } from '@react-navigation/native';
 
 interface Assessment {
@@ -20,6 +21,7 @@ export default function FolderScreen() {
   const router = useRouter();
   const { folderId, folderName } = useLocalSearchParams();
   const [assessments, setAssessments] = useState<Assessment[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
 
   useFocusEffect(
     React.useCallback(() => {
@@ -39,8 +41,13 @@ export default function FolderScreen() {
     }
   };
 
+  const filteredAssessments = assessments.filter(assessment =>
+    assessment.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    assessment.activity.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   const handleBack = () => {
-    router.push('/records'); // This will navigate back to the records screen
+    router.push('/records');
   };
 
   const renderAssessmentItem = ({ item }: { item: Assessment }) => (
@@ -53,7 +60,16 @@ export default function FolderScreen() {
       </View>
       <Text style={styles.assessmentActivity}>Activity: {item.activity}</Text>
       <View style={styles.assessmentActions}>
-        <TouchableOpacity style={styles.actionButton}>
+        <TouchableOpacity 
+          style={styles.actionButton}
+          onPress={() => router.push({
+            pathname: '/records/view-pdf',
+            params: { 
+              assessmentId: item.id,
+              assessmentName: item.name
+            }
+          })}
+        >
           <FontAwesome5 name="file-pdf" size={20} color="#1294D5" />
           <Text style={styles.actionButtonText}>View PDF</Text>
         </TouchableOpacity>
@@ -75,13 +91,22 @@ export default function FolderScreen() {
           onSettingsPress={() => {}}
         />
 
+        <SearchBar
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+        />
+
         <FlatList
           style={styles.list}
-          data={assessments}
+          data={filteredAssessments}
           renderItem={renderAssessmentItem}
           keyExtractor={item => item.id}
           ListEmptyComponent={
-            <Text style={styles.emptyText}>No assessments in this folder</Text>
+            <Text style={styles.emptyText}>
+              {searchQuery 
+                ? 'No matching assessments found'
+                : 'No assessments in this folder'}
+            </Text>
           }
         />
       </View>
@@ -101,6 +126,7 @@ const styles = StyleSheet.create({
   list: {
     flex: 1,
     backgroundColor: '#F2F1F9',
+    marginTop: 0,
   },
   assessmentItem: {
     backgroundColor: 'white',

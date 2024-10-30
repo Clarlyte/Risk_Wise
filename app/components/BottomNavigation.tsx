@@ -3,11 +3,13 @@ import { View, TouchableOpacity, Text, StyleSheet } from 'react-native';
 
 interface BottomNavigationProps {
   onBack?: () => void;
-  onNext: () => void;
+  onNext?: () => void;
   nextDisabled?: boolean;
+  nextLabel?: string;
+  nextIcon?: string;
 }
 
-export function BottomNavigation({ onBack, onNext, nextDisabled }: BottomNavigationProps) {
+export function BottomNavigation({ onBack, onNext, nextDisabled, nextLabel, nextIcon }: BottomNavigationProps) {
   return (
     <View style={styles.navigationContainer}>
       {onBack && (
@@ -27,7 +29,7 @@ export function BottomNavigation({ onBack, onNext, nextDisabled }: BottomNavigat
         onPress={onNext}
         disabled={nextDisabled}
       >
-        <Text style={styles.nextButtonText}>Next</Text>
+        <Text style={styles.nextButtonText}>{nextLabel}</Text>
       </TouchableOpacity>
     </View>
   );

@@ -4,11 +4,12 @@ import { FontAwesome5 } from '@expo/vector-icons';
 
 interface HeaderProps {
   title: string;
-  onSettingsPress: () => void;
   onBackPress?: () => void;
+  onSettingsPress?: () => void;
+  rightIcon?: React.ReactNode;
 }
 
-export function Header({ title, onSettingsPress, onBackPress }: HeaderProps) {
+export function Header({ title, onSettingsPress, onBackPress, rightIcon }: HeaderProps) {
   return (
     <View style={styles.header}>
       {onBackPress && (
