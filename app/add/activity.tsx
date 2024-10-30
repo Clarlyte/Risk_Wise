@@ -26,6 +26,7 @@ export default function ActivityHazardScreen() {
   } = useAssessment();
   const [selectedHazard, setSelectedHazard] = useState('');
   const [customHazard, setCustomHazard] = useState('');
+  const [selectedActivity, setSelectedActivity] = useState('');
 
   const activityOptions = [
     { label: 'Working at Heights', value: 'Working at Heights' },
@@ -42,23 +43,11 @@ export default function ActivityHazardScreen() {
   ];
 
   const handleActivityChange = (value: string | number) => {
-    if (value === 'custom') {
-      setActivity('custom');
-      return;
-    }
-    setActivity(value.toString());
-    setCustomActivity('');
+    setSelectedActivity(value.toString());
   };
 
   const handleHazardChange = (value: string | number) => {
     setSelectedHazard(value.toString());
-    if (value !== 'custom') {
-      handleAddHazard({
-        description: value.toString(),
-        images: [],
-      });
-      setSelectedHazard('');
-    }
   };
 
   const handleAddHazard = ({ description, images }: { description: string; images: string[] }) => {
@@ -118,6 +107,17 @@ export default function ActivityHazardScreen() {
     });
   };
 
+  const handleAddActivity = () => {
+    if (selectedActivity === 'custom') {
+      if (!customActivity.trim()) return;
+      setActivity('custom');
+      setCustomActivity(customActivity.trim());
+    } else {
+      setActivity(selectedActivity);
+    }
+    setSelectedActivity('');
+  };
+
   return (
     <SafeAreaView style={[styles.safeArea, { paddingBottom: 80 }]}>
       <View style={styles.container}>
@@ -130,22 +130,52 @@ export default function ActivityHazardScreen() {
             <View style={styles.inputSection}>
               <Text style={styles.sectionTitle}>Work Activity</Text>
               <View style={styles.inputContainer}>
-                <CustomDropdown
-                  label="Select Work Activity"
-                  data={activityOptions}
-                  value={activity}
-                  onChange={handleActivityChange}
-                />
+                {activity && (
+                  <View style={styles.itemContainer}>
+                    <Text style={styles.itemText}>
+                      {activity === 'custom' ? customActivity : activity}
+                    </Text>
+                    <TouchableOpacity 
+                      onPress={() => {
+                        setActivity('');
+                        setCustomActivity('');
+                      }}
+                      style={styles.removeButton}
+                    >
+                      <Text style={styles.removeButtonText}>Remove</Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
 
-                {activity === 'custom' && (
-                  <TextInput
-                    style={styles.input}
-                    placeholder="Enter custom work activity"
-                    value={customActivity}
-                    onChangeText={setCustomActivity}
-                    multiline
-                    numberOfLines={4}
-                  />
+                {!activity && (
+                  <>
+                    <CustomDropdown
+                      label="Select Work Activity"
+                      data={activityOptions}
+                      value={selectedActivity}
+                      onChange={handleActivityChange}
+                    />
+
+                    {selectedActivity === 'custom' && (
+                      <TextInput
+                        style={styles.input}
+                        placeholder="Enter custom work activity"
+                        value={customActivity}
+                        onChangeText={setCustomActivity}
+                        multiline
+                        numberOfLines={4}
+                      />
+                    )}
+
+                    {selectedActivity && (
+                      <TouchableOpacity
+                        style={styles.addButton}
+                        onPress={handleAddActivity}
+                      >
+                        <Text style={styles.addButtonText}>Set Activity</Text>
+                      </TouchableOpacity>
+                    )}
+                  </>
                 )}
               </View>
             </View>
@@ -176,21 +206,37 @@ export default function ActivityHazardScreen() {
                 />
 
                 {selectedHazard === 'custom' && (
-                  <View style={styles.customHazardInput}>
-                    <TextInput
-                      style={styles.input}
-                      placeholder="Describe the hazard"
-                      value={customHazard}
-                      onChangeText={setCustomHazard}
-                      multiline
-                    />
-                    <TouchableOpacity
-                      style={styles.addButton}
-                      onPress={handleCustomHazardSave}
-                    >
-                      <Text style={styles.addButtonText}>Add Hazard</Text>
-                    </TouchableOpacity>
-                  </View>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Describe the hazard"
+                    value={customHazard}
+                    onChangeText={setCustomHazard}
+                    multiline
+                  />
+                )}
+
+                {selectedHazard && (
+                  <TouchableOpacity
+                    style={styles.addButton}
+                    onPress={() => {
+                      if (selectedHazard === 'custom') {
+                        if (!customHazard.trim()) return;
+                        handleAddHazard({
+                          description: customHazard.trim(),
+                          images: [],
+                        });
+                      } else {
+                        handleAddHazard({
+                          description: selectedHazard,
+                          images: [],
+                        });
+                      }
+                      setSelectedHazard('');
+                      setCustomHazard('');
+                    }}
+                  >
+                    <Text style={styles.addButtonText}>Add Hazard</Text>
+                  </TouchableOpacity>
                 )}
               </View>
             </View>

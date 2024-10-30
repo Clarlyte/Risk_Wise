@@ -113,9 +113,15 @@ export default function FinalRiskScreen() {
                   {/* Initial Risk Section */}
                   <View style={styles.riskSection}>
                     <Text style={styles.riskSectionTitle}>Initial Risk</Text>
-                    <Text style={[styles.riskScore, { color: initialRiskLevel.color }]}>
-                      {hazard.riskScore} - {initialRiskLevel.text}
-                    </Text>
+                    <View style={styles.riskScoreContainer}>
+                      <Text style={styles.scoreLabel}>Score:</Text>
+                      <Text style={[styles.scoreValue, { color: initialRiskLevel.color }]}>
+                        {hazard.riskScore}
+                      </Text>
+                      <Text style={[styles.riskLevel, { color: initialRiskLevel.color }]}>
+                        {initialRiskLevel.text}
+                      </Text>
+                    </View>
                   </View>
 
                   {/* Final Risk Assessment Section */}
@@ -136,10 +142,13 @@ export default function FinalRiskScreen() {
                       onChange={(value) => updateFinalRisk(hazard.id, 'finalSeverity', Number(value))}
                     />
                     
-                    <View style={styles.finalScoreContainer}>
-                      <Text style={styles.label}>Final Risk Score: </Text>
-                      <Text style={[styles.riskScore, { color: finalRiskLevel.color }]}>
-                        {hazard.finalRiskScore} - {finalRiskLevel.text}
+                    <View style={styles.riskScoreContainer}>
+                      <Text style={styles.scoreLabel}>Score:</Text>
+                      <Text style={[styles.scoreValue, { color: finalRiskLevel.color }]}>
+                        {hazard.finalRiskScore}
+                      </Text>
+                      <Text style={[styles.riskLevel, { color: finalRiskLevel.color }]}>
+                        {finalRiskLevel.text}
                       </Text>
                     </View>
                   </View>
@@ -183,6 +192,14 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 8,
     marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 3,
   },
   hazardTitle: {
     fontSize: 18,
@@ -196,28 +213,40 @@ const styles = StyleSheet.create({
   },
   riskSection: {
     marginTop: 16,
-    padding: 12,
-    backgroundColor: '#f5f5f5',
+    padding: 16,
+    backgroundColor: 'white',
     borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#eee',
   },
   riskSectionTitle: {
     fontSize: 16,
     fontWeight: '600',
-    marginBottom: 12,
+    marginBottom: 16,
     color: '#333',
   },
-  label: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginRight: 8,
-  },
-  finalScoreContainer: {
+  riskScoreContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 16,
+    flexWrap: 'wrap',
+    gap: 8,
   },
-  riskScore: {
+  scoreLabel: {
+    fontSize: 14,
+    color: '#666',
+  },
+  scoreValue: {
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  riskLevel: {
+    fontSize: 14,
+    fontWeight: '500',
+    backgroundColor: 'white',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 4,
+    borderWidth: 1,
+    borderColor: '#eee',
   },
 });

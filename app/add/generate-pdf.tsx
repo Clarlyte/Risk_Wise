@@ -165,6 +165,8 @@ export default function GeneratePDFScreen() {
           })}
           onNext={saveAssessment}
           nextDisabled={!assessmentName.trim() || !selectedFolderId}
+          nextLabel="Create Assessment"
+          nextIcon="save"
         />
       </View>
     </SafeAreaView>
