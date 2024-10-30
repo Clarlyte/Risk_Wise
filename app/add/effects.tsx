@@ -6,6 +6,7 @@ import { Header } from '../components/Header';
 import { BottomNavigation } from '../components/BottomNavigation';
 import { CustomDropdown } from '../components/CustomDropdown';
 import { Hazard, Effect, Control } from '../types/risk';
+import { useAssessment } from '../contexts/AssessmentContext';
 
 interface HazardWithEffects extends Hazard {
   effects: Effect[];
@@ -186,6 +187,24 @@ export default function EffectsScreen() {
     );
   };
 
+  const { saveTempAssessment } = useAssessment();
+
+  const handleNext = async () => {
+    await saveTempAssessment({
+      activity,
+      hazardsWithEffects,
+      step: 'effects'
+    });
+    
+    router.push({
+      pathname: '/add/risk-assessment',
+      params: {
+        activity,
+        hazards: JSON.stringify(hazardsWithEffects),
+      },
+    });
+  };
+
   return (
     <SafeAreaView style={[styles.safeArea, { paddingBottom: 80 }]}>
       <View style={styles.container}>
@@ -289,14 +308,8 @@ export default function EffectsScreen() {
 
         <BottomNavigation
           onBack={() => router.push('/add/activity')}
-          onNext={() => router.push({
-            pathname: '/add/risk-assessment',
-            params: {
-              activity,
-              hazards: JSON.stringify(hazardsWithEffects),
-            }
-          })}
-          nextDisabled={!isFormValid()}
+          onNext={handleNext}
+          nextDisabled={!hazardsWithEffects.every(hazard => hazard.effects.length > 0)}
         />
       </View>
     </SafeAreaView>

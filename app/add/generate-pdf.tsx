@@ -10,6 +10,7 @@ import { FolderNameDialog } from '../components/FolderNameDialog';
 import { FontAwesome5 } from '@expo/vector-icons';
 import { useFolders } from '../contexts/FolderContext';
 import { useAssessment } from '../contexts/AssessmentContext';
+import { generatePDFContent } from '../utils/pdfGenerator';
 
 interface Folder {
   id: string;
@@ -23,6 +24,7 @@ interface Assessment {
   activity: string;
   hazards: any[];
   folderId: string;
+  pdfPath?: string;
 }
 
 export default function GeneratePDFScreen() {
@@ -52,41 +54,45 @@ export default function GeneratePDFScreen() {
   };
 
   const saveAssessment = async () => {
-    if (!assessmentName.trim()) {
-      Alert.alert('Error', 'Please enter an assessment name');
-      return;
-    }
-
-    if (!selectedFolderId) {
-      Alert.alert('Error', 'Please select or create a folder');
+    if (!assessmentName.trim() || !selectedFolderId) {
+      Alert.alert('Error', 'Please fill in all fields');
       return;
     }
 
     try {
+      const tempData = await AsyncStorage.getItem('tempAssessment');
+      if (!tempData) {
+        Alert.alert('Error', 'Assessment data not found');
+        return;
+      }
+
+      const assessmentData = JSON.parse(tempData);
+      
       const assessment: Assessment = {
         id: Date.now().toString(),
         name: assessmentName.trim(),
         date: new Date().toISOString(),
-        activity: activity as string,
-        hazards: JSON.parse(hazardsParam as string),
+        activity: assessmentData.activity,
+        hazards: assessmentData.hazardsWithFinalRisk || [],
         folderId: selectedFolderId,
       };
 
+      // Generate PDF
+      const pdfPath = await generatePDFContent(assessment);
+      
+      // Save to permanent storage
       const storedAssessments = await AsyncStorage.getItem('assessments');
-      const assessments: Assessment[] = storedAssessments 
-        ? JSON.parse(storedAssessments)
-        : [];
-
-      const updatedAssessments = [...assessments, assessment];
+      const assessments = storedAssessments ? JSON.parse(storedAssessments) : [];
+      const updatedAssessments = [...assessments, { ...assessment, pdfPath }];
       await AsyncStorage.setItem('assessments', JSON.stringify(updatedAssessments));
+
+      // Clear temporary data
+      await clearTempAssessment();
 
       Alert.alert('Success', 'Assessment saved successfully', [
         {
           text: 'OK',
           onPress: () => {
-            setAssessmentName('');
-            setSelectedFolderId('');
-            clearAssessmentInputs();
             router.push('/records');
           },
         },

@@ -1,8 +1,11 @@
-import React, { useState } from 'react';
-import { View, StyleSheet, Dimensions, ActivityIndicator } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, StyleSheet, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Stack, useRouter, useLocalSearchParams } from 'expo-router';
 import { WebView } from 'react-native-webview';
+import { Share } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as FileSystem from 'expo-file-system';
 import { Header } from '../components/Header';
 import { BottomNavigation } from '../components/BottomNavigation';
 import { FontAwesome5 } from '@expo/vector-icons';
@@ -13,6 +16,8 @@ interface PDFViewerProps {
 
 function PDFViewer({ uri }: PDFViewerProps) {
   const [isLoading, setIsLoading] = useState(true);
+
+  if (!uri) return null;
 
   return (
     <View style={styles.pdfContainer}>
@@ -39,23 +44,61 @@ function PDFViewer({ uri }: PDFViewerProps) {
 export default function ViewPDFScreen() {
   const router = useRouter();
   const { assessmentId, assessmentName } = useLocalSearchParams();
-  const [isShareModalVisible, setIsShareModalVisible] = useState(false);
+  const [pdfUrl, setPdfUrl] = useState<string>('');
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    loadAssessment();
+  }, [assessmentId]);
+
+  const loadAssessment = async () => {
+    try {
+      const storedAssessments = await AsyncStorage.getItem('assessments');
+      if (storedAssessments) {
+        const assessments = JSON.parse(storedAssessments);
+        const assessment = assessments.find((a: any) => a.id === assessmentId);
+        if (assessment && assessment.pdfPath) {
+          setPdfUrl(assessment.pdfPath);
+        }
+      }
+    } catch (error) {
+      console.error('Error loading assessment:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleBack = () => {
     router.back();
   };
 
-  const handleShare = () => {
-    // Implement share functionality
-    setIsShareModalVisible(true);
+  const handleShare = async () => {
+    if (pdfUrl) {
+      try {
+        await Share.share({
+          url: pdfUrl,
+          title: `${assessmentName} Assessment`,
+        });
+      } catch (error) {
+        console.error('Error sharing PDF:', error);
+      }
+    }
   };
 
-  const handleDownload = () => {
-    // Implement download functionality
+  const handleDownload = async () => {
+    // Implement download functionality if needed
+    console.log('Download functionality to be implemented');
   };
 
-  // This would be replaced with your actual PDF URL
-  const pdfUrl = 'https://your-api-endpoint/assessments/${assessmentId}/pdf';
+  if (isLoading) {
+    return (
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#FC7524" />
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -84,7 +127,7 @@ export default function ViewPDFScreen() {
           }
         />
 
-        <PDFViewer uri={pdfUrl} />
+        {pdfUrl && <PDFViewer uri={pdfUrl} />}
 
         <BottomNavigation
           onBack={handleBack}

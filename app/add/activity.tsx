@@ -21,7 +21,8 @@ export default function ActivityHazardScreen() {
     customActivity,
     setCustomActivity,
     hazards,
-    setHazards
+    setHazards,
+    saveTempAssessment
   } = useAssessment();
   const [selectedHazard, setSelectedHazard] = useState('');
   const [customHazard, setCustomHazard] = useState('');
@@ -98,6 +99,23 @@ export default function ActivityHazardScreen() {
   const isFormValid = () => {
     const hasValidActivity = activity === 'custom' ? customActivity.trim().length > 0 : activity.length > 0;
     return hasValidActivity && hazards.length > 0;
+  };
+
+  const handleNext = async () => {
+    await saveTempAssessment({
+      activity,
+      hazards,
+      step: 'activity'
+    });
+    
+    const finalActivity = activity === 'custom' ? customActivity.trim() : activity;
+    router.push({
+      pathname: '/add/effects',
+      params: {
+        activity: finalActivity,
+        hazards: JSON.stringify(hazards),
+      },
+    });
   };
 
   return (
@@ -181,8 +199,9 @@ export default function ActivityHazardScreen() {
 
         <BottomNavigation
           onBack={() => router.push('/')}
-          onNext={handleContinue}
+          onNext={handleNext}
           nextDisabled={!isFormValid()}
+          nextLabel="Next"
         />
       </View>
     </SafeAreaView>
