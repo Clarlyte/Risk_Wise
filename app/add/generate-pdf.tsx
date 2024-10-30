@@ -9,6 +9,7 @@ import { CustomDropdown } from '../components/CustomDropdown';
 import { FolderNameDialog } from '../components/FolderNameDialog';
 import { FontAwesome5 } from '@expo/vector-icons';
 import { useFolders } from '../contexts/FolderContext';
+import { useAssessment } from '../contexts/AssessmentContext';
 
 interface Folder {
   id: string;
@@ -26,6 +27,7 @@ interface Assessment {
 
 export default function GeneratePDFScreen() {
   const router = useRouter();
+  const { clearAssessmentInputs } = useAssessment();
   const { activity, hazards: hazardsParam } = useLocalSearchParams();
   const [assessmentName, setAssessmentName] = useState('');
   const [selectedFolderId, setSelectedFolderId] = useState('');
@@ -84,6 +86,7 @@ export default function GeneratePDFScreen() {
           onPress: () => {
             setAssessmentName('');
             setSelectedFolderId('');
+            clearAssessmentInputs();
             router.push('/records');
           },
         },

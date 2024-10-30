@@ -6,6 +6,7 @@ import { Header } from '../components/Header';
 import { BottomNavigation } from '../components/BottomNavigation';
 import { CustomDropdown } from '../components/CustomDropdown';
 import { Hazard, Effect, Control } from '../types/risk';
+import { useAssessment } from '../contexts/AssessmentContext';
 
 interface HazardWithEffects extends Hazard {
   effects: Effect[];
@@ -14,9 +15,14 @@ interface HazardWithEffects extends Hazard {
 
 export default function ActivityHazardScreen() {
   const router = useRouter();
-  const [activity, setActivity] = useState('');
-  const [customActivity, setCustomActivity] = useState('');
-  const [hazards, setHazards] = useState<HazardWithEffects[]>([]);
+  const {
+    activity,
+    setActivity,
+    customActivity,
+    setCustomActivity,
+    hazards,
+    setHazards
+  } = useAssessment();
   const [selectedHazard, setSelectedHazard] = useState('');
   const [customHazard, setCustomHazard] = useState('');
 
