@@ -34,6 +34,11 @@ export function CustomDropdown({
 }: DropdownProps) {
   const [showPicker, setShowPicker] = useState(false);
 
+  const getSelectedLabel = () => {
+    const selectedOption = data.find(item => item.value === value);
+    return selectedOption ? selectedOption.label : 'Select folder';
+  };
+
   const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -55,7 +60,7 @@ export function CustomDropdown({
           style={styles.dropdownButton}
           onPress={() => setShowPicker(!showPicker)}
         >
-          <Text style={styles.dropdownText}>{value || 'Input'}</Text>
+          <Text style={styles.dropdownText}>{getSelectedLabel()}</Text>
           <Ionicons name="chevron-down" size={24} color="#666" />
         </TouchableOpacity>
       </View>
