@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, ScrollView, Text, StyleSheet } from 'react-native';
+import { View, ScrollView, Text } from 'react-native';
 import { Stack, useRouter, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Header } from '../components/Header';
@@ -8,6 +8,7 @@ import { HazardWithControls } from '../types/hazard';
 import { CustomDropdown } from '../components/CustomDropdown';
 import { LIKELIHOOD_OPTIONS, SEVERITY_OPTIONS } from '../types/risk';
 import { useAssessment } from '../contexts/AssessmentContext';
+import { inputStyles } from '../styles/input-styles';
 
 interface HazardWithFinalRisk extends HazardWithControls {
   finalLikelihood: number;
@@ -94,39 +95,39 @@ export default function FinalRiskScreen() {
   };
 
   return (
-    <SafeAreaView style={[styles.safeArea, { paddingBottom: 80 }]}>
-      <View style={styles.container}>
+    <SafeAreaView style={[inputStyles.safeArea, { paddingBottom: 80 }]}>
+      <View style={inputStyles.container}>
         <Stack.Screen options={{ headerShown: false }} />
         <Header title="Final Risk Assessment" onSettingsPress={() => {}} />
         
-        <View style={styles.scrollContainer}>
-          <ScrollView style={styles.content}>
+        <View style={inputStyles.scrollContainer}>
+          <ScrollView style={inputStyles.content}>
             {hazardsWithFinalRisk.map((hazard, index) => {
               const initialRiskLevel = getRiskLevel(hazard.riskScore);
               const finalRiskLevel = getRiskLevel(hazard.finalRiskScore);
               
               return (
-                <View key={hazard.id} style={styles.hazardSection}>
-                  <Text style={styles.hazardTitle}>Hazard {index + 1}</Text>
-                  <Text style={styles.hazardDescription}>{hazard.description}</Text>
+                <View key={hazard.id} style={inputStyles.hazardSection}>
+                  <Text style={inputStyles.hazardTitle}>Hazard {index + 1}</Text>
+                  <Text style={inputStyles.hazardDescription}>{hazard.description}</Text>
                   
                   {/* Initial Risk Section */}
-                  <View style={styles.riskSection}>
-                    <Text style={styles.riskSectionTitle}>Initial Risk</Text>
-                    <View style={styles.riskScoreContainer}>
-                      <Text style={styles.scoreLabel}>Score:</Text>
-                      <Text style={[styles.scoreValue, { color: initialRiskLevel.color }]}>
+                  <View style={inputStyles.riskSection}>
+                    <Text style={inputStyles.riskSectionTitle}>Initial Risk</Text>
+                    <View style={inputStyles.riskScoreContainer}>
+                      <Text style={inputStyles.scoreLabel}>Score:</Text>
+                      <Text style={[inputStyles.scoreValue, { color: initialRiskLevel.color }]}>
                         {hazard.riskScore}
                       </Text>
-                      <Text style={[styles.riskLevel, { color: initialRiskLevel.color }]}>
+                      <Text style={[inputStyles.riskLevel, { color: initialRiskLevel.color }]}>
                         {initialRiskLevel.text}
                       </Text>
                     </View>
                   </View>
 
                   {/* Final Risk Assessment Section */}
-                  <View style={styles.riskSection}>
-                    <Text style={styles.riskSectionTitle}>Final Risk Assessment</Text>
+                  <View style={inputStyles.riskSection}>
+                    <Text style={inputStyles.riskSectionTitle}>Final Risk Assessment</Text>
                     
                     <CustomDropdown
                       label="Likelihood"
@@ -142,12 +143,12 @@ export default function FinalRiskScreen() {
                       onChange={(value) => updateFinalRisk(hazard.id, 'finalSeverity', Number(value))}
                     />
                     
-                    <View style={styles.riskScoreContainer}>
-                      <Text style={styles.scoreLabel}>Score:</Text>
-                      <Text style={[styles.scoreValue, { color: finalRiskLevel.color }]}>
+                    <View style={inputStyles.riskScoreContainer}>
+                      <Text style={inputStyles.scoreLabel}>Score:</Text>
+                      <Text style={[inputStyles.scoreValue, { color: finalRiskLevel.color }]}>
                         {hazard.finalRiskScore}
                       </Text>
-                      <Text style={[styles.riskLevel, { color: finalRiskLevel.color }]}>
+                      <Text style={[inputStyles.riskLevel, { color: finalRiskLevel.color }]}>
                         {finalRiskLevel.text}
                       </Text>
                     </View>
@@ -169,84 +170,3 @@ export default function FinalRiskScreen() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: '#FC7524',
-  },
-  container: {
-    flex: 1,
-    backgroundColor: '#F2F1F9',
-  },
-  scrollContainer: {
-    flex: 1,
-  },
-  content: {
-    flex: 1,
-    padding: 16,
-    marginBottom: 80,
-  },
-  hazardSection: {
-    backgroundColor: 'white',
-    padding: 16,
-    borderRadius: 8,
-    marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 3,
-  },
-  hazardTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 8,
-  },
-  hazardDescription: {
-    fontSize: 16,
-    color: '#666',
-    marginBottom: 16,
-  },
-  riskSection: {
-    marginTop: 16,
-    padding: 16,
-    backgroundColor: 'white',
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#eee',
-  },
-  riskSectionTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 16,
-    color: '#333',
-  },
-  riskScoreContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  scoreLabel: {
-    fontSize: 14,
-    color: '#666',
-  },
-  scoreValue: {
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  riskLevel: {
-    fontSize: 14,
-    fontWeight: '500',
-    backgroundColor: 'white',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 4,
-    borderWidth: 1,
-    borderColor: '#eee',
-  },
-});

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, ScrollView, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, ScrollView, Text, TextInput, TouchableOpacity } from 'react-native';
 import { Stack, useRouter, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Header } from '../components/Header';
@@ -7,6 +7,7 @@ import { BottomNavigation } from '../components/BottomNavigation';
 import { CustomDropdown } from '../components/CustomDropdown';
 import { Hazard, Effect, Control } from '../types/risk';
 import { useAssessment } from '../contexts/AssessmentContext';
+import { inputStyles } from '../styles/input-styles';
 
 interface HazardWithEffects extends Hazard {
   effects: Effect[];
@@ -206,28 +207,28 @@ export default function EffectsScreen() {
   };
 
   return (
-    <SafeAreaView style={[styles.safeArea, { paddingBottom: 80 }]}>
-      <View style={styles.container}>
+    <SafeAreaView style={[inputStyles.safeArea, { paddingBottom: 80 }]}>
+      <View style={inputStyles.container}>
         <Stack.Screen options={{ headerShown: false }} />
         <Header title="Hazard Effects & Controls" onSettingsPress={() => {}} />
         
-        <View style={styles.scrollContainer}>
-          <ScrollView style={styles.content}>
+        <View style={inputStyles.scrollContainer}>
+          <ScrollView style={inputStyles.content}>
             {hazardsWithEffects.map((hazard: HazardWithEffects, index: number) => (
-              <View key={hazard.id} style={styles.hazardSection}>
-                <Text style={styles.hazardTitle}>Hazard {index + 1}</Text>
-                <Text style={styles.hazardDescription}>{hazard.description}</Text>
+              <View key={hazard.id} style={inputStyles.hazardSection}>
+                <Text style={inputStyles.hazardTitle}>Hazard {index + 1}</Text>
+                <Text style={inputStyles.hazardDescription}>{hazard.description}</Text>
                 
-                <View style={styles.section}>
-                  <Text style={styles.sectionTitle}>Effects</Text>
+                <View style={inputStyles.section}>
+                  <Text style={inputStyles.sectionTitle}>Effects</Text>
                   {hazard.effects.map((effect: Effect) => (
-                    <View key={effect.id} style={styles.itemContainer}>
-                      <Text style={styles.itemText}>{effect.description}</Text>
+                    <View key={effect.id} style={inputStyles.itemContainer}>
+                      <Text style={inputStyles.itemText}>{effect.description}</Text>
                       <TouchableOpacity 
                         onPress={() => removeEffect(hazard.id, effect.id)}
-                        style={styles.removeButton}
+                        style={inputStyles.removeButton}
                       >
-                        <Text style={styles.removeButtonText}>Remove</Text>
+                        <Text style={inputStyles.removeButtonText}>Remove</Text>
                       </TouchableOpacity>
                     </View>
                   ))}
@@ -241,7 +242,7 @@ export default function EffectsScreen() {
                   
                   {selectedEffects[hazard.id] === 'custom' && (
                     <TextInput
-                      style={styles.input}
+                      style={[inputStyles.input, inputStyles.textArea]}
                       value={customEffect[hazard.id] || ''}
                       onChangeText={(text) => setCustomEffect({
                         ...customEffect,
@@ -253,23 +254,23 @@ export default function EffectsScreen() {
                   )}
                   
                   <TouchableOpacity
-                    style={styles.addButton}
+                    style={inputStyles.addButton}
                     onPress={() => addEffect(hazard.id)}
                   >
-                    <Text style={styles.addButtonText}>Add Effect</Text>
+                    <Text style={inputStyles.addButtonText}>Add Effect</Text>
                   </TouchableOpacity>
                 </View>
                 
-                <View style={styles.section}>
-                  <Text style={styles.sectionTitle}>Existing Controls</Text>
+                <View style={inputStyles.section}>
+                  <Text style={inputStyles.sectionTitle}>Existing Controls</Text>
                   {hazard.existingControls.map((control: Control) => (
-                    <View key={control.id} style={styles.itemContainer}>
-                      <Text style={styles.itemText}>{control.description}</Text>
+                    <View key={control.id} style={inputStyles.itemContainer}>
+                      <Text style={inputStyles.itemText}>{control.description}</Text>
                       <TouchableOpacity 
                         onPress={() => removeControl(hazard.id, control.id)}
-                        style={styles.removeButton}
+                        style={inputStyles.removeButton}
                       >
-                        <Text style={styles.removeButtonText}>Remove</Text>
+                        <Text style={inputStyles.removeButtonText}>Remove</Text>
                       </TouchableOpacity>
                     </View>
                   ))}
@@ -283,7 +284,7 @@ export default function EffectsScreen() {
                   
                   {selectedControls[hazard.id] === 'custom' && (
                     <TextInput
-                      style={styles.input}
+                      style={[inputStyles.input, inputStyles.textArea]}
                       value={customControl[hazard.id] || ''}
                       onChangeText={(text) => setCustomControl({
                         ...customControl,
@@ -295,10 +296,10 @@ export default function EffectsScreen() {
                   )}
                   
                   <TouchableOpacity
-                    style={styles.addButton}
+                    style={inputStyles.addButton}
                     onPress={() => addControl(hazard.id)}
                   >
-                    <Text style={styles.addButtonText}>Add Control</Text>
+                    <Text style={inputStyles.addButtonText}>Add Control</Text>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -316,94 +317,3 @@ export default function EffectsScreen() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: '#FC7524',
-  },
-  container: {
-    flex: 1,
-    backgroundColor: '#F2F1F9',
-    position: 'relative',
-  },
-  scrollContainer: {
-    flex: 1,
-  },
-  content: {
-    padding: 16,
-    marginBottom: 80,
-  },
-  section: {
-    marginBottom: 24,
-  },
-  hazardSection: {
-    backgroundColor: 'white',
-    padding: 16,
-    borderRadius: 8,
-    marginBottom: 16,
-  },
-  hazardTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 8,
-  },
-  hazardDescription: {
-    fontSize: 16,
-    color: '#666',
-    marginBottom: 16,
-  },
-  input: {
-    marginTop: 16,
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 8,
-    padding: 12,
-    minHeight: 80,
-    backgroundColor: 'white',
-    textAlignVertical: 'top',
-  },
-  itemContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: '#bcf5bc',
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 8,
-  },
-  itemText: {
-    flex: 1,
-    fontSize: 14,
-    color: '#333',
-  },
-  removeButton: {
-    backgroundColor: '#ff4444',
-    padding: 8,
-    borderRadius: 4,
-    marginLeft: 8,
-  },
-  removeButtonText: {
-    color: 'white',
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  addButton: {
-    backgroundColor: '#1294D5',
-    padding: 12,
-    borderRadius: 8,
-    marginTop: 8,
-    alignItems: 'center',
-  },
-  addButtonText: {
-    color: 'white',
-    fontWeight: '600',
-    fontSize: 16,
-  },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 12,
-    color: '#333',
-  },
-});

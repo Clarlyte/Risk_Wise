@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, ScrollView, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, ScrollView, Text, TextInput, TouchableOpacity } from 'react-native';
 import { Stack, useRouter, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Header } from '../components/Header';
@@ -8,6 +8,7 @@ import { CustomDropdown } from '../components/CustomDropdown';
 import { HazardWithRisk } from '../types/hazard';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useAssessment } from '../contexts/AssessmentContext';
+import { inputStyles } from '../styles/input-styles';
 
 interface HazardWithControls extends HazardWithRisk {
   additionalControls: {
@@ -233,29 +234,29 @@ export default function ControlsScreen() {
   };
 
   return (
-    <SafeAreaView style={[styles.safeArea, { paddingBottom: 80 }]}>
-      <View style={styles.container}>
+    <SafeAreaView style={[inputStyles.safeArea, { paddingBottom: 80 }]}>
+      <View style={inputStyles.container}>
         <Stack.Screen options={{ headerShown: false }} />
         <Header title="Additional Controls" onSettingsPress={() => {}} />
         
-        <View style={styles.scrollContainer}>
-          <ScrollView style={styles.content}>
+        <View style={inputStyles.scrollContainer}>
+          <ScrollView style={inputStyles.content}>
             {hazardsWithControls.map((hazard, index) => (
-              <View key={hazard.id} style={styles.hazardSection}>
-                <Text style={styles.hazardTitle}>Hazard {index + 1}</Text>
-                <Text style={styles.hazardDescription}>{hazard.description}</Text>
+              <View key={hazard.id} style={inputStyles.hazardSection}>
+                <Text style={inputStyles.hazardTitle}>Hazard {index + 1}</Text>
+                <Text style={inputStyles.hazardDescription}>{hazard.description}</Text>
 
                 {/* Administrative Controls */}
-                <View style={styles.section}>
-                  <Text style={styles.sectionTitle}>Administrative Controls</Text>
+                <View style={inputStyles.section}>
+                  <Text style={inputStyles.sectionTitle}>Administrative Controls</Text>
                   {hazard.additionalControls.ac.map((control, idx) => (
-                    <View key={idx} style={styles.itemContainer}>
-                      <Text style={styles.itemText}>{control}</Text>
+                    <View key={idx} style={inputStyles.controlItemContainer}>
+                      <Text style={inputStyles.itemText}>{control}</Text>
                       <TouchableOpacity 
                         onPress={() => removeControl(hazard.id, 'ac', idx)}
-                        style={styles.removeButton}
+                        style={inputStyles.removeButton}
                       >
-                        <Text style={styles.removeButtonText}>Remove</Text>
+                        <Text style={inputStyles.removeButtonText}>Remove</Text>
                       </TouchableOpacity>
                     </View>
                   ))}
@@ -269,7 +270,7 @@ export default function ControlsScreen() {
                   
                   {selectedControls[hazard.id]?.ac === 'custom' && (
                     <TextInput
-                      style={styles.input}
+                      style={[inputStyles.input, inputStyles.textArea]}
                       value={customControls[hazard.id]?.ac || ''}
                       onChangeText={(text) => setCustomControls(prev => ({
                         ...prev,
@@ -281,24 +282,24 @@ export default function ControlsScreen() {
                   )}
                   
                   <TouchableOpacity
-                    style={styles.addButton}
+                    style={inputStyles.addButton}
                     onPress={() => addControl(hazard.id, 'ac')}
                   >
-                    <Text style={styles.addButtonText}>Add Control</Text>
+                    <Text style={inputStyles.addButtonText}>Add Control</Text>
                   </TouchableOpacity>
                 </View>
 
                 {/* Engineering Controls */}
-                <View style={styles.section}>
-                  <Text style={styles.sectionTitle}>Engineering Controls</Text>
+                <View style={inputStyles.section}>
+                  <Text style={inputStyles.sectionTitle}>Engineering Controls</Text>
                   {hazard.additionalControls.ec.map((control, idx) => (
-                    <View key={idx} style={styles.itemContainer}>
-                      <Text style={styles.itemText}>{control}</Text>
+                    <View key={idx} style={inputStyles.controlItemContainer}>
+                      <Text style={inputStyles.itemText}>{control}</Text>
                       <TouchableOpacity 
                         onPress={() => removeControl(hazard.id, 'ec', idx)}
-                        style={styles.removeButton}
+                        style={inputStyles.removeButton}
                       >
-                        <Text style={styles.removeButtonText}>Remove</Text>
+                        <Text style={inputStyles.removeButtonText}>Remove</Text>
                       </TouchableOpacity>
                     </View>
                   ))}
@@ -312,7 +313,7 @@ export default function ControlsScreen() {
                   
                   {selectedControls[hazard.id]?.ec === 'custom' && (
                     <TextInput
-                      style={styles.input}
+                      style={[inputStyles.input, inputStyles.textArea]}
                       value={customControls[hazard.id]?.ec || ''}
                       onChangeText={(text) => setCustomControls(prev => ({
                         ...prev,
@@ -324,24 +325,24 @@ export default function ControlsScreen() {
                   )}
                   
                   <TouchableOpacity
-                    style={styles.addButton}
+                    style={inputStyles.addButton}
                     onPress={() => addControl(hazard.id, 'ec')}
                   >
-                    <Text style={styles.addButtonText}>Add Control</Text>
+                    <Text style={inputStyles.addButtonText}>Add Control</Text>
                   </TouchableOpacity>
                 </View>
 
                 {/* PPE Controls */}
-                <View style={styles.section}>
-                  <Text style={styles.sectionTitle}>PPE Required</Text>
+                <View style={inputStyles.section}>
+                  <Text style={inputStyles.sectionTitle}>PPE Required</Text>
                   {hazard.additionalControls.ppe.map((control, idx) => (
-                    <View key={idx} style={styles.itemContainer}>
-                      <Text style={styles.itemText}>{control}</Text>
+                    <View key={idx} style={inputStyles.controlItemContainer}>
+                      <Text style={inputStyles.itemText}>{control}</Text>
                       <TouchableOpacity 
                         onPress={() => removeControl(hazard.id, 'ppe', idx)}
-                        style={styles.removeButton}
+                        style={inputStyles.removeButton}
                       >
-                        <Text style={styles.removeButtonText}>Remove</Text>
+                        <Text style={inputStyles.removeButtonText}>Remove</Text>
                       </TouchableOpacity>
                     </View>
                   ))}
@@ -355,7 +356,7 @@ export default function ControlsScreen() {
                   
                   {selectedControls[hazard.id]?.ppe === 'custom' && (
                     <TextInput
-                      style={styles.input}
+                      style={[inputStyles.input, inputStyles.textArea]}
                       value={customControls[hazard.id]?.ppe || ''}
                       onChangeText={(text) => setCustomControls(prev => ({
                         ...prev,
@@ -367,26 +368,26 @@ export default function ControlsScreen() {
                   )}
                   
                   <TouchableOpacity
-                    style={styles.addButton}
+                    style={inputStyles.addButton}
                     onPress={() => addControl(hazard.id, 'ppe')}
                   >
-                    <Text style={styles.addButtonText}>Add Control</Text>
+                    <Text style={inputStyles.addButtonText}>Add Control</Text>
                   </TouchableOpacity>
                 </View>
 
                 {/* Point Person */}
-                <View style={styles.section}>
-                  <Text style={styles.sectionTitle}>Point Person</Text>
+                <View style={inputStyles.section}>
+                  <Text style={inputStyles.sectionTitle}>Point Person</Text>
                   {hazard.pointPerson && (
-                    <View style={styles.itemContainer}>
-                      <Text style={styles.itemText}>{hazard.pointPerson}</Text>
+                    <View style={inputStyles.controlItemContainer}>
+                      <Text style={inputStyles.itemText}>{hazard.pointPerson}</Text>
                       <TouchableOpacity 
                         onPress={() => setHazardsWithControls(prev =>
                           prev.map(h => h.id === hazard.id ? { ...h, pointPerson: '' } : h)
                         )}
-                        style={styles.removeButton}
+                        style={inputStyles.removeButton}
                       >
-                        <Text style={styles.removeButtonText}>Remove</Text>
+                        <Text style={inputStyles.removeButtonText}>Remove</Text>
                       </TouchableOpacity>
                     </View>
                   )}
@@ -400,7 +401,7 @@ export default function ControlsScreen() {
                   
                   {selectedPointPerson[hazard.id] === 'custom' && (
                     <TextInput
-                      style={styles.input}
+                      style={[inputStyles.input, inputStyles.textArea]}
                       value={customPointPerson[hazard.id] || ''}
                       onChangeText={(text) => setCustomPointPerson(prev => ({
                         ...prev,
@@ -411,18 +412,18 @@ export default function ControlsScreen() {
                   )}
                   
                   <TouchableOpacity
-                    style={styles.addButton}
+                    style={inputStyles.addButton}
                     onPress={() => updatePointPerson(hazard.id)}
                   >
-                    <Text style={styles.addButtonText}>Set Point Person</Text>
+                    <Text style={inputStyles.addButtonText}>Set Point Person</Text>
                   </TouchableOpacity>
                 </View>
 
                 {/* Due Date */}
-                <View style={styles.section}>
-                  <Text style={styles.sectionTitle}>Due Date</Text>
+                <View style={inputStyles.section}>
+                  <Text style={inputStyles.sectionTitle}>Due Date</Text>
                   <TextInput
-                    style={styles.input}
+                    style={inputStyles.input}
                     value={hazard.dueDate}
                     onChangeText={(text) => updateDueDate(hazard.id, text)}
                     placeholder="Enter due date"
@@ -450,120 +451,3 @@ export default function ControlsScreen() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: '#FC7524',
-  },
-  container: {
-    flex: 1,
-    backgroundColor: '#F2F1F9',
-  },
-  scrollContainer: {
-    flex: 1,
-  },
-  content: {
-    padding: 16,
-    marginBottom: 80,
-  },
-  hazardSection: {
-    backgroundColor: 'white',
-    padding: 16,
-    borderRadius: 8,
-    marginBottom: 16,
-  },
-  hazardTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 8,
-  },
-  hazardDescription: {
-    fontSize: 16,
-    color: '#666',
-    marginBottom: 16,
-  },
-  controlSection: {
-    marginBottom: 16,
-  },
-  controlLabel: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 8,
-  },
-  controlItem: {
-    fontSize: 14,
-    marginLeft: 8,
-    marginBottom: 4,
-  },
-  addControlContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  controlInput: {
-    flex: 1,
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 8,
-    padding: 12,
-  },
-  addButton: {
-    padding: 12,
-    borderWidth: 1,
-    borderColor: '#1294D5',
-    borderRadius: 8,
-    backgroundColor: '#1294D5',
-    alignItems: 'center'
-  },
-  label: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 8,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 8,
-    padding: 12,
-  },
-  section: {
-    marginBottom: 24,
-  },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 12,
-    color: '#333',
-  },
-  itemContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: '#bcf5bc',
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 8,
-  },
-  itemText: {
-    flex: 1,
-    fontSize: 14,
-    color: '#333',
-  },
-  addButtonText: {
-    color: 'white',
-    fontWeight: '600',
-    fontSize: 16,
-  },
-  removeButton: {
-    backgroundColor: '#ff4444',
-    padding: 8,
-    borderRadius: 4,
-    marginLeft: 8,
-  },
-  removeButtonText: {
-    color: 'white',
-    fontSize: 12,
-    fontWeight: '600',
-  },
-});

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, Alert } from 'react-native';
 import { Stack, useRouter, useLocalSearchParams, useFocusEffect } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -11,6 +11,7 @@ import { FontAwesome5 } from '@expo/vector-icons';
 import { useFolders } from '../contexts/FolderContext';
 import { useAssessment } from '../contexts/AssessmentContext';
 import { generatePDFContent } from '../utils/pdfGenerator';
+import { inputStyles } from '../styles/input-styles';
 
 interface Folder {
   id: string;
@@ -104,21 +105,21 @@ export default function GeneratePDFScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <View style={styles.container}>
+    <SafeAreaView style={[inputStyles.safeArea, { paddingBottom: 80 }]}>
+      <View style={inputStyles.container}>
         <Stack.Screen options={{ headerShown: false }} />
         <Header title="Save Assessment" onSettingsPress={() => {}} />
 
-        <View style={styles.content}>
-          <Text style={styles.label}>Assessment Name</Text>
+        <View style={inputStyles.content}>
+          <Text style={inputStyles.label}>Assessment Name</Text>
           <TextInput
-            style={styles.input}
+            style={inputStyles.input}
             value={assessmentName}
             onChangeText={setAssessmentName}
             placeholder="Enter assessment name"
           />
 
-          <Text style={styles.label}>Select Folder</Text>
+          <Text style={inputStyles.label}>Select Folder</Text>
           <CustomDropdown
             label="Select folder"
             data={[
@@ -140,14 +141,14 @@ export default function GeneratePDFScreen() {
 
           <TouchableOpacity 
             style={[
-              styles.createButton,
-              (!assessmentName.trim() || !selectedFolderId) && styles.createButtonDisabled
+              inputStyles.createButton,
+              (!assessmentName.trim() || !selectedFolderId) && inputStyles.createButtonDisabled
             ]}
             onPress={saveAssessment}
             disabled={!assessmentName.trim() || !selectedFolderId}
           >
             <FontAwesome5 name="save" size={20} color="white" />
-            <Text style={styles.createButtonText}>Create Assessment</Text>
+            <Text style={inputStyles.createButtonText}>Create Assessment</Text>
           </TouchableOpacity>
         </View>
 
@@ -165,55 +166,10 @@ export default function GeneratePDFScreen() {
           })}
           onNext={saveAssessment}
           nextDisabled={!assessmentName.trim() || !selectedFolderId}
-          nextLabel="Create Assessment"
+          nextLabel="Finish"
           nextIcon="save"
         />
       </View>
     </SafeAreaView>
   );
-}
-
-const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: '#FC7524',
-  },
-  container: {
-    flex: 1,
-    backgroundColor: '#F2F1F9',
-  },
-  content: {
-    padding: 16,
-  },
-  label: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 8,
-    color: '#333',
-  },
-  input: {
-    backgroundColor: 'white',
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 16,
-    fontSize: 16,
-  },
-  createButton: {
-    backgroundColor: '#1294D5',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 16,
-    borderRadius: 8,
-    marginTop: 24,
-    gap: 12,
-  },
-  createButtonDisabled: {
-    opacity: 0.5,
-  },
-  createButtonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-}); 
+} 

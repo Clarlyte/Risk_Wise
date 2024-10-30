@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, ScrollView, Text, StyleSheet } from 'react-native';
+import { View, ScrollView, Text } from 'react-native';
 import { Stack, useRouter, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Header } from '../components/Header';
@@ -8,6 +8,7 @@ import { HazardWithEffects, HazardWithRisk } from '../types/hazard';
 import { LIKELIHOOD_OPTIONS, SEVERITY_OPTIONS } from '../types/risk';
 import { BottomNavigation } from '../components/BottomNavigation';
 import { useAssessment } from '../contexts/AssessmentContext';
+import { inputStyles } from '../styles/input-styles';
 
 export default function RiskAssessmentScreen() {
   const router = useRouter();
@@ -87,19 +88,19 @@ export default function RiskAssessmentScreen() {
   };
 
   return (
-    <SafeAreaView style={[styles.safeArea, { paddingBottom: 80 }]}>
-      <View style={styles.container}>
+    <SafeAreaView style={[inputStyles.safeArea, { paddingBottom: 80 }]}>
+      <View style={inputStyles.container}>
         <Stack.Screen options={{ headerShown: false }} />
         <Header title="Risk Assessment" onSettingsPress={() => {}} />
         
-        <View style={styles.scrollContainer}>
-          <ScrollView style={styles.content}>
+        <View style={inputStyles.scrollContainer}>
+          <ScrollView style={inputStyles.content}>
             {hazardsWithRisk.map((hazard, index) => {
               const riskLevel = getRiskLevel(hazard.riskScore);
               return (
-                <View key={hazard.id} style={styles.hazardSection}>
-                  <Text style={styles.hazardTitle}>Hazard {index + 1}</Text>
-                  <Text style={styles.hazardDescription}>{hazard.description}</Text>
+                <View key={hazard.id} style={inputStyles.hazardSection}>
+                  <Text style={inputStyles.hazardTitle}>Hazard {index + 1}</Text>
+                  <Text style={inputStyles.hazardDescription}>{hazard.description}</Text>
                   
                   <CustomDropdown
                     label="Likelihood"
@@ -115,9 +116,9 @@ export default function RiskAssessmentScreen() {
                     onChange={(value) => updateRisk(hazard.id, 'severity', Number(value))}
                   />
                   
-                  <View style={styles.riskScore}>
-                    <Text style={styles.label}>Risk Score: </Text>
-                    <Text style={[styles.score, { color: riskLevel.color }]}>
+                  <View style={inputStyles.riskScore}>
+                    <Text style={inputStyles.label}>Risk Score: </Text>
+                    <Text style={[inputStyles.score, { color: riskLevel.color }]}>
                       {hazard.riskScore} - {riskLevel.text}
                     </Text>
                   </View>
@@ -138,50 +139,3 @@ export default function RiskAssessmentScreen() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: '#FC7524',
-  },
-  container: {
-    flex: 1,
-    backgroundColor: '#F2F1F9',
-  },
-  scrollContainer: {
-    flex: 1,
-  },
-  content: {
-    padding: 16,
-    marginBottom: 80,
-  },
-  hazardSection: {
-    backgroundColor: 'white',
-    padding: 16,
-    borderRadius: 8,
-    marginBottom: 16,
-  },
-  hazardTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 8,
-  },
-  hazardDescription: {
-    fontSize: 16,
-    color: '#666',
-    marginBottom: 16,
-  },
-  label: {
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  riskScore: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 16,
-  },
-  score: {
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-});

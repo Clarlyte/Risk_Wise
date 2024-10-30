@@ -36,7 +36,7 @@ export function CustomDropdown({
 
   const getSelectedLabel = () => {
     const selectedOption = data.find(item => item.value === value);
-    return selectedOption ? selectedOption.label : 'Select folder';
+    return selectedOption ? selectedOption.label : label;
   };
 
   const pickImage = async () => {
