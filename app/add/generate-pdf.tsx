@@ -86,8 +86,8 @@ export default function GeneratePDFScreen() {
       const updatedAssessments = [...assessments, { ...assessment, pdfPath }];
       await AsyncStorage.setItem('assessments', JSON.stringify(updatedAssessments));
 
-      // Clear temporary data
-      await clearTempAssessment();
+      // Clear temporary data using clearAssessmentInputs instead
+      await clearAssessmentInputs();
 
       Alert.alert('Success', 'Assessment saved successfully', [
         {

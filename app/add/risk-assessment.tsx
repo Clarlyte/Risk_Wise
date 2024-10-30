@@ -12,6 +12,8 @@ import { useAssessment } from '../contexts/AssessmentContext';
 export default function RiskAssessmentScreen() {
   const router = useRouter();
   const { activity, hazards: hazardsParam } = useLocalSearchParams();
+  const { saveTempAssessment } = useAssessment();
+  
   const [hazardsWithRisk, setHazardsWithRisk] = useState<HazardWithRisk[]>(() => {
     const parsedHazards: HazardWithEffects[] = JSON.parse(hazardsParam as string);
     return parsedHazards.map(hazard => ({
