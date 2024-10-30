@@ -183,6 +183,7 @@ export default function ActivityHazardScreen() {
           onBack={() => router.push('/')}
           onNext={handleContinue}
           nextDisabled={!isFormValid()}
+          nextLabel="Next"
         />
       </View>
     </SafeAreaView>

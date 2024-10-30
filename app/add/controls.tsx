@@ -438,6 +438,7 @@ export default function ControlsScreen() {
                hazard.additionalControls.ec.length > 0 ||
                hazard.additionalControls.ppe.length > 0)
           )}
+          nextLabel="Next"
         />
       </View>
     </SafeAreaView>

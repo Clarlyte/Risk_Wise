@@ -151,6 +151,7 @@ export default function FinalRiskScreen() {
           })}
           onNext={handleContinue}
           nextDisabled={!hazardsWithFinalRisk.length}
+          nextLabel="Finish"
         />
       </View>
     </SafeAreaView>

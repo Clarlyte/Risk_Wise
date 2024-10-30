@@ -120,6 +120,7 @@ export default function RiskAssessmentScreen() {
         </View>
 
         <BottomNavigation
+          nextLabel="Next"
           onBack={() => router.push({
             pathname: '/add/effects',
             params: {

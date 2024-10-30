@@ -288,6 +288,7 @@ export default function EffectsScreen() {
         </View>
 
         <BottomNavigation
+          nextLabel="Next"
           onBack={() => router.push('/add/activity')}
           onNext={() => router.push({
             pathname: '/add/risk-assessment',
