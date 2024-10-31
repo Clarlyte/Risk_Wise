@@ -118,8 +118,6 @@ export default function GeneratePDFScreen() {
             onChangeText={setAssessmentName}
             placeholder="Enter assessment name"
           />
-
-          <Text style={inputStyles.label}>Select Folder</Text>
           <CustomDropdown
             label="Select folder"
             data={[
