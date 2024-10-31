@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, FlatList, Image } from 'react-native';
-import { Picker } from '@react-native-picker/picker';
+import { View, Text, TouchableOpacity, Modal, FlatList, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import * as ImagePicker from 'expo-image-picker';
 
 interface DropdownOption {
   label: string;
@@ -14,117 +12,57 @@ interface DropdownProps {
   data: DropdownOption[];
   value: string | number;
   onChange: (value: string | number) => void;
-  onAddItem?: (item: string) => void;
-  selectedItems?: string[];
-  onRemoveItem?: (item: string) => void;
-  enableImageUpload?: boolean;
-  onImageSelect?: (uri: string) => void;
 }
 
-export function CustomDropdown({ 
-  label, 
-  data, 
-  value, 
-  onChange,
-  onAddItem,
-  selectedItems = [],
-  onRemoveItem,
-  enableImageUpload = false,
-  onImageSelect
-}: DropdownProps) {
-  const [showPicker, setShowPicker] = useState(false);
+export function CustomDropdown({ label, data, value, onChange }: DropdownProps) {
+  const [isVisible, setIsVisible] = useState(false);
 
   const getSelectedLabel = () => {
     const selectedOption = data.find(item => item.value === value);
-    return selectedOption ? selectedOption.label : label;
-  };
-
-  const pickImage = async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [4, 3],
-      quality: 1,
-    });
-
-    if (!result.canceled && result.assets[0].uri) {
-      onImageSelect?.(result.assets[0].uri);
-    }
+    return selectedOption ? selectedOption.label : 'Select...';
   };
 
   return (
     <View style={styles.container}>
-      <View style={styles.headerContainer}>
-        <Text style={styles.label}>{label}:</Text>
+      <Text style={styles.label}>{label}:</Text>
+      <TouchableOpacity 
+        style={styles.dropdownButton}
+        onPress={() => setIsVisible(true)}
+      >
+        <Text style={styles.dropdownText}>{getSelectedLabel()}</Text>
+        <Ionicons name="chevron-down" size={24} color="#666" />
+      </TouchableOpacity>
+
+      <Modal
+        visible={isVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setIsVisible(false)}
+      >
         <TouchableOpacity 
-          style={styles.dropdownButton}
-          onPress={() => setShowPicker(!showPicker)}
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setIsVisible(false)}
         >
-          <Text style={styles.dropdownText}>{getSelectedLabel()}</Text>
-          <Ionicons name="chevron-down" size={24} color="#666" />
-        </TouchableOpacity>
-      </View>
-
-      {showPicker && (
-        <View style={styles.pickerContainer}>
-          <Picker
-            selectedValue={value}
-            onValueChange={(itemValue) => {
-              onChange(itemValue);
-              if (onAddItem) onAddItem(itemValue.toString());
-              setShowPicker(false);
-            }}
-            style={styles.picker}
-          >
-            {data.map((item) => (
-              <Picker.Item 
-                key={item.value.toString()} 
-                label={item.label} 
-                value={item.value} 
-              />
-            ))}
-          </Picker>
-          <View style={styles.actionButtons}>
-            <TouchableOpacity 
-              style={styles.addButton}
-              onPress={() => {
-                if (value && onAddItem) {
-                  onAddItem(value.toString());
-                  setShowPicker(false);
-                }
-              }}
-            >
-              <Text style={styles.addButtonText}>Add</Text>
-            </TouchableOpacity>
-            
-            {enableImageUpload && (
-              <TouchableOpacity 
-                style={styles.imageButton}
-                onPress={pickImage}
-              >
-                <Ionicons name="camera" size={24} color="#666" />
-              </TouchableOpacity>
-            )}
-          </View>
-        </View>
-      )}
-
-      {selectedItems.length > 0 && (
-        <FlatList
-          data={selectedItems}
-          keyExtractor={(item) => item}
-          renderItem={({ item }) => (
-            <View style={styles.selectedItem}>
-              <Text style={styles.selectedItemText}>{item}</Text>
-              {onRemoveItem && (
-                <TouchableOpacity onPress={() => onRemoveItem(item)}>
-                  <Ionicons name="close-circle" size={24} color="#666" />
+          <View style={styles.modalContent}>
+            <FlatList
+              data={data}
+              keyExtractor={(item) => item.value.toString()}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={styles.optionItem}
+                  onPress={() => {
+                    onChange(item.value);
+                    setIsVisible(false);
+                  }}
+                >
+                  <Text style={styles.optionText}>{item.label}</Text>
                 </TouchableOpacity>
               )}
-            </View>
-          )}
-        />
-      )}
+            />
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </View>
   );
 }
@@ -133,73 +71,42 @@ const styles = StyleSheet.create({
   container: {
     marginBottom: 16,
   },
-  headerContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
   label: {
     fontSize: 16,
     color: '#333',
-    marginRight: 8,
-    flex: 1,
+    marginBottom: 8,
   },
   dropdownButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderColor: '#ccc',
-    borderWidth: 1,
-    borderRadius: 8,
-    padding: 8,
-    flex: 2,
+    justifyContent: 'space-between',
     backgroundColor: 'white',
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 8,
+    padding: 12,
   },
   dropdownText: {
-    flex: 1,
     fontSize: 16,
     color: '#333',
   },
-  pickerContainer: {
-    borderColor: '#ccc',
-    borderWidth: 1,
-    borderRadius: 8,
-    backgroundColor: 'white',
-    marginTop: 4,
-  },
-  picker: {
-    height: 200,
-  },
-  actionButtons: {
-    flexDirection: 'row',
-    borderTopWidth: 1,
-    borderTopColor: '#ccc',
-  },
-  addButton: {
+  modalOverlay: {
     flex: 1,
-    padding: 12,
-    alignItems: 'center',
-  },
-  addButtonText: {
-    color: '#666',
-    fontSize: 16,
-  },
-  imageButton: {
-    padding: 12,
-    borderLeftWidth: 1,
-    borderLeftColor: '#ccc',
-    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'center',
+    padding: 20,
   },
-  selectedItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 8,
-    backgroundColor: '#f5f5f5',
-    marginTop: 4,
+  modalContent: {
+    backgroundColor: 'white',
     borderRadius: 8,
+    maxHeight: '80%',
   },
-  selectedItemText: {
-    flex: 1,
+  optionItem: {
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+  },
+  optionText: {
     fontSize: 16,
     color: '#333',
   },
