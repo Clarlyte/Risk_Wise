@@ -12,9 +12,10 @@ interface DropdownProps {
   data: DropdownOption[];
   value: string | number;
   onChange: (value: string | number) => void;
+  style?: object;
 }
 
-export function CustomDropdown({ label, data, value, onChange }: DropdownProps) {
+export function CustomDropdown({ label, data, value, onChange, style }: DropdownProps) {
   const [isVisible, setIsVisible] = useState(false);
 
   const getSelectedLabel = () => {
@@ -23,7 +24,7 @@ export function CustomDropdown({ label, data, value, onChange }: DropdownProps) 
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, style]}>
       <Text style={styles.label}>{label}:</Text>
       <TouchableOpacity 
         style={styles.dropdownButton}

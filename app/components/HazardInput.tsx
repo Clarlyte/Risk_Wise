@@ -2,14 +2,23 @@ import React, { useState } from 'react';
 import { View, TextInput, TouchableOpacity, Image, StyleSheet, Text } from 'react-native';
 import { FontAwesome5 } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
+import { CustomDropdown } from './CustomDropdown'; // Import your CustomDropdown component
 
 interface HazardInputProps {
   onSave: (hazard: { description: string; images: string[] }) => void;
   onCancel: () => void;
 }
 
+const predefinedHazards = [
+  { label: 'Fall from Height', value: 'Fall from Height' },
+  { label: 'Electrical Shock', value: 'Electrical Shock' },
+  { label: 'Chemical Exposure', value: 'Chemical Exposure' },
+  { label: 'Custom Hazard', value: 'custom' },
+];
+
 export function HazardInput({ onSave, onCancel }: HazardInputProps) {
-  const [description, setDescription] = useState('');
+  const [selectedHazard, setSelectedHazard] = useState('');
+  const [customDescription, setCustomDescription] = useState('');
   const [images, setImages] = useState<string[]>([]);
 
   const takePhoto = async () => {
@@ -28,22 +37,38 @@ export function HazardInput({ onSave, onCancel }: HazardInputProps) {
   };
 
   const handleSave = () => {
-    if (!description.trim()) return;
-    onSave({ description: description.trim(), images });
-    setDescription('');
+    const description = selectedHazard === 'custom' ? customDescription.trim() : selectedHazard;
+    if (!description) return;
+    onSave({ description, images });
+    setSelectedHazard('');
+    setCustomDescription('');
     setImages([]);
   };
 
   return (
     <View style={styles.container}>
       <View style={styles.inputContainer}>
-        <TextInput
-          style={styles.input}
-          placeholder="Describe the hazard"
-          value={description}
-          onChangeText={setDescription}
-          multiline
+        <CustomDropdown
+          label="Select Hazard"
+          data={predefinedHazards}
+          value={selectedHazard}
+          onChange={(value) => {
+            setSelectedHazard(value.toString());
+            if (value !== 'custom') {
+              setCustomDescription('');
+            }
+          }}
+          style={styles.dropdown}
         />
+        {selectedHazard === 'custom' && (
+          <TextInput
+            style={styles.input}
+            placeholder="Describe the custom hazard"
+            value={customDescription}
+            onChangeText={setCustomDescription}
+            multiline
+          />
+        )}
         <TouchableOpacity style={styles.cameraButton} onPress={takePhoto}>
           <FontAwesome5 name="camera" size={20} color="#1294D5" />
         </TouchableOpacity>
@@ -71,6 +96,7 @@ export function HazardInput({ onSave, onCancel }: HazardInputProps) {
         <TouchableOpacity 
           style={[styles.button, styles.saveButton]} 
           onPress={handleSave}
+          disabled={images.length === 0}
         >
           <Text style={styles.saveButtonText}>Add Hazard</Text>
         </TouchableOpacity>
@@ -89,6 +115,9 @@ const styles = StyleSheet.create({
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  dropdown: {
+    flex: 1,
   },
   input: {
     flex: 1,
