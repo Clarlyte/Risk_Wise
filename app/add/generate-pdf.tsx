@@ -30,7 +30,7 @@ interface Assessment {
 
 export default function GeneratePDFScreen() {
   const router = useRouter();
-  const { clearAssessmentInputs } = useAssessment();
+  const { resetAssessment } = useAssessment();
   const { activity, hazards: hazardsParam } = useLocalSearchParams();
   const [assessmentName, setAssessmentName] = useState('');
   const [selectedFolderId, setSelectedFolderId] = useState('');
@@ -78,25 +78,22 @@ export default function GeneratePDFScreen() {
         folderId: selectedFolderId,
       };
 
-      // Check for duplicates before saving
-      const storedAssessments = await AsyncStorage.getItem('assessments');
-      const assessments = storedAssessments ? JSON.parse(storedAssessments) : [];
-      const assessmentExists = assessments.some(existingAssessment => existingAssessment.id === assessment.id);
-
-      if (assessmentExists) {
-        Alert.alert('Error', 'An assessment with this ID already exists.');
-        return;
-      }
-
       // Generate PDF
       const pdfPath = await generatePDFContent(assessment);
       
       // Save to permanent storage
+      const storedAssessments = await AsyncStorage.getItem('assessments');
+      const assessments: Assessment[] = storedAssessments ? JSON.parse(storedAssessments) : [];
+      
+      // Add the new assessment
       const updatedAssessments = [...assessments, { ...assessment, pdfPath }];
+      
       await AsyncStorage.setItem('assessments', JSON.stringify(updatedAssessments));
 
-      // Clear temporary data using clearAssessmentInputs instead
-      await clearAssessmentInputs();
+      // Clear temporary data
+      await resetAssessment(); // Clear inputs after saving
+
+      await loadFolders();
 
       Alert.alert('Success', 'Assessment saved successfully', [
         {

@@ -34,7 +34,8 @@ export default function FolderScreen() {
       const storedAssessments = await AsyncStorage.getItem('assessments');
       if (storedAssessments) {
         const allAssessments = JSON.parse(storedAssessments);
-        setAssessments(allAssessments.filter((a: Assessment) => a.folderId === folderId));
+        const folderAssessments = allAssessments.filter((a: Assessment) => a.folderId === folderId);
+        setAssessments(folderAssessments);
       }
     } catch (error) {
       console.error('Error loading assessments:', error);

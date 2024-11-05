@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, TextInput, ScrollView, Text, TouchableOpacity } from 'react-native';
+import { View, ScrollView, Text, TouchableOpacity, Image, TextInput } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Header } from '../components/Header';
@@ -7,7 +7,8 @@ import { BottomNavigation } from '../components/BottomNavigation';
 import { CustomDropdown } from '../components/CustomDropdown';
 import { Hazard, Effect, Control } from '../types/risk';
 import { useAssessment } from '../contexts/AssessmentContext';
-import { inputStyles } from '../styles/input-styles'
+import { inputStyles } from '../styles/input-styles';
+import { HazardInput } from '../components/HazardInput';
 
 interface HazardWithEffects extends Hazard {
   effects: Effect[];
@@ -25,8 +26,6 @@ export default function ActivityHazardScreen() {
     setHazards,
     saveTempAssessment
   } = useAssessment();
-  const [selectedHazard, setSelectedHazard] = useState('');
-  const [customHazard, setCustomHazard] = useState('');
   const [selectedActivity, setSelectedActivity] = useState('');
 
   const activityOptions = [
@@ -36,41 +35,19 @@ export default function ActivityHazardScreen() {
     { label: 'Custom Activity', value: 'custom' },
   ];
 
-  const hazardOptions = [
-    { label: 'Fall from Height', value: 'Fall from Height' },
-    { label: 'Electrical Shock', value: 'Electrical Shock' },
-    { label: 'Chemical Exposure', value: 'Chemical Exposure' },
-    { label: 'Custom Hazard', value: 'custom' },
-  ];
-
   const handleActivityChange = (value: string | number) => {
     setSelectedActivity(value.toString());
   };
 
-  const handleHazardChange = (value: string | number) => {
-    setSelectedHazard(value.toString());
-  };
-
-  const handleAddHazard = ({ description, images }: { description: string; images: string[] }) => {
+  const handleAddHazard = (hazard: { description: string; images: string[] }) => {
     const newHazard: HazardWithEffects = {
       id: Date.now().toString(),
-      description,
-      images,
+      description: hazard.description,
+      images: hazard.images,
       effects: [],
       existingControls: [],
     };
     setHazards([...hazards, newHazard]);
-    setCustomHazard('');
-  };
-
-  const handleCustomHazardSave = () => {
-    if (!customHazard.trim()) return;
-    
-    handleAddHazard({
-      description: customHazard.trim(),
-      images: [],
-    });
-    setSelectedHazard('');
   };
 
   const handleContinue = () => {
@@ -92,13 +69,21 @@ export default function ActivityHazardScreen() {
   };
 
   const handleNext = async () => {
-    await saveTempAssessment({
-      activity,
-      hazards,
-      step: 'activity'
-    });
-    
     const finalActivity = activity === 'custom' ? customActivity.trim() : activity;
+    if (!finalActivity || hazards.length === 0) return;
+
+    // Prepare the data to save
+    const assessmentData = {
+      activity: finalActivity,
+      hazards: hazards.map(hazard => ({
+        description: hazard.description,
+        images: hazard.images,
+      })),
+      step: 'activity',
+    };
+
+    await saveTempAssessment(assessmentData); // Save the assessment data
+
     router.push({
       pathname: '/add/effects',
       params: {
@@ -106,17 +91,6 @@ export default function ActivityHazardScreen() {
         hazards: JSON.stringify(hazards),
       },
     });
-  };
-
-  const handleAddActivity = () => {
-    if (selectedActivity === 'custom') {
-      if (!customActivity.trim()) return;
-      setActivity('custom');
-      setCustomActivity(customActivity.trim());
-    } else {
-      setActivity(selectedActivity);
-    }
-    setSelectedActivity('');
   };
 
   return (
@@ -171,7 +145,16 @@ export default function ActivityHazardScreen() {
                     {selectedActivity && (
                       <TouchableOpacity
                         style={inputStyles.addButton}
-                        onPress={handleAddActivity}
+                        onPress={() => {
+                          if (selectedActivity === 'custom') {
+                            if (!customActivity.trim()) return;
+                            setActivity('custom');
+                            setCustomActivity(customActivity.trim());
+                          } else {
+                            setActivity(selectedActivity);
+                          }
+                          setSelectedActivity('');
+                        }}
                       >
                         <Text style={inputStyles.addButtonText}>Set Activity</Text>
                       </TouchableOpacity>
@@ -188,6 +171,12 @@ export default function ActivityHazardScreen() {
                 {hazards.map((hazard) => (
                   <View key={hazard.id} style={inputStyles.hazardItemContainer}>
                     <Text style={inputStyles.itemText}>{hazard.description}</Text>
+                    {hazard.images.length > 0 && (
+                      <Image
+                        source={{ uri: hazard.images[0] }} // Display the first image
+                        style={{ width: 100, height: 100, borderRadius: 8, marginVertical: 4 }}
+                      />
+                    )}
                     <TouchableOpacity 
                       onPress={() => {
                         setHazards(hazards.filter(h => h.id !== hazard.id));
@@ -199,46 +188,7 @@ export default function ActivityHazardScreen() {
                   </View>
                 ))}
 
-                <CustomDropdown
-                  label="Add Hazard"
-                  data={hazardOptions}
-                  value={selectedHazard}
-                  onChange={handleHazardChange}
-                />
-
-                {selectedHazard === 'custom' && (
-                  <TextInput
-                    style={[inputStyles.input, inputStyles.textArea]}
-                    placeholder="Describe the hazard"
-                    value={customHazard}
-                    onChangeText={setCustomHazard}
-                    multiline
-                  />
-                )}
-
-                {selectedHazard && (
-                  <TouchableOpacity
-                    style={inputStyles.addButton}
-                    onPress={() => {
-                      if (selectedHazard === 'custom') {
-                        if (!customHazard.trim()) return;
-                        handleAddHazard({
-                          description: customHazard.trim(),
-                          images: [],
-                        });
-                      } else {
-                        handleAddHazard({
-                          description: selectedHazard,
-                          images: [],
-                        });
-                      }
-                      setSelectedHazard('');
-                      setCustomHazard('');
-                    }}
-                  >
-                    <Text style={inputStyles.addButtonText}>Add Hazard</Text>
-                  </TouchableOpacity>
-                )}
+                <HazardInput onSave={handleAddHazard} onCancel={() => {}} />
               </View>
             </View>
           </ScrollView>

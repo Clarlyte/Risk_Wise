@@ -36,20 +36,20 @@ export function HazardInput({ onSave, onCancel }: HazardInputProps) {
 
   return (
     <View style={styles.container}>
-      <TextInput
-        style={styles.input}
-        placeholder="Describe the hazard"
-        value={description}
-        onChangeText={setDescription}
-        multiline
-      />
-      
-      <View style={styles.imageSection}>
+      <View style={styles.inputContainer}>
+        <TextInput
+          style={styles.input}
+          placeholder="Describe the hazard"
+          value={description}
+          onChangeText={setDescription}
+          multiline
+        />
         <TouchableOpacity style={styles.cameraButton} onPress={takePhoto}>
           <FontAwesome5 name="camera" size={20} color="#1294D5" />
-          <Text style={styles.buttonText}>Take Photo</Text>
         </TouchableOpacity>
-        
+      </View>
+      
+      <View style={styles.imageSection}>
         <View style={styles.imagePreview}>
           {images.map((uri, index) => (
             <Image 
@@ -86,7 +86,12 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginBottom: 16,
   },
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   input: {
+    flex: 1,
     borderWidth: 1,
     borderColor: '#ccc',
     borderRadius: 8,
@@ -94,21 +99,17 @@ const styles = StyleSheet.create({
     minHeight: 80,
     marginBottom: 16,
   },
-  imageSection: {
-    marginBottom: 16,
-  },
   cameraButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    marginLeft: 8,
     padding: 12,
     borderWidth: 1,
     borderColor: '#1294D5',
     borderRadius: 8,
-    marginBottom: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  buttonText: {
-    marginLeft: 8,
-    color: '#1294D5',
+  imageSection: {
+    marginBottom: 16,
   },
   imagePreview: {
     flexDirection: 'row',

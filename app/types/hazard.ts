@@ -1,8 +1,8 @@
-import { Hazard as BaseHazard } from './risk';
+import { Hazard as BaseHazard, Effect, Control } from './risk';
 
 export interface HazardWithEffects extends BaseHazard {
-  effects: string;
-  existingControls: string;
+  effects?: Effect[];
+  existingControls?: Control[];
 }
 
 export interface HazardWithRisk extends HazardWithEffects {
