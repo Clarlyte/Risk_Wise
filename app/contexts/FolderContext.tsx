@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useAssessment } from './AssessmentContext'; // Import the Assessment context
 
 interface Folder {
   id: string;
@@ -18,6 +19,7 @@ const FolderContext = createContext<FolderContextType | undefined>(undefined);
 
 export function FolderProvider({ children }: { children: React.ReactNode }) {
   const [folders, setFolders] = useState<Folder[]>([]);
+  const { resetAssessment } = useAssessment(); // Get the reset function
 
   const loadFolders = useCallback(async () => {
     try {
@@ -46,6 +48,8 @@ export function FolderProvider({ children }: { children: React.ReactNode }) {
     };
     const updatedFolders = [...folders, newFolder];
     await saveFolders(updatedFolders);
+    
+    resetAssessment(); // Reset assessments when a new folder is created
     return newFolder;
   };
 

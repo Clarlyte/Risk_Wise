@@ -13,6 +13,7 @@ interface AssessmentContextType {
   tempAssessment: any;
   saveTempAssessment: (data: any) => Promise<void>;
   clearTempAssessment: () => Promise<void>;
+  resetAssessment: () => void;
 }
 
 const AssessmentContext = createContext<AssessmentContextType | undefined>(undefined);
@@ -27,6 +28,12 @@ export function AssessmentProvider({ children }: { children: React.ReactNode }) 
     setActivity('');
     setCustomActivity('');
     setHazards([]);
+  };
+
+  const resetAssessment = () => {
+    clearAssessmentInputs();
+    setTempAssessment(null);
+    AsyncStorage.removeItem('tempAssessment');
   };
 
   const saveTempAssessment = async (data: any) => {
@@ -49,6 +56,7 @@ export function AssessmentProvider({ children }: { children: React.ReactNode }) 
         hazards,
         setHazards,
         clearAssessmentInputs,
+        resetAssessment,
         tempAssessment,
         saveTempAssessment,
         clearTempAssessment,
