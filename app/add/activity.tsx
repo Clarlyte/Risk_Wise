@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, ScrollView, Text, TouchableOpacity, Image, TextInput } from 'react-native';
+import { View, ScrollView, Text, TouchableOpacity, Image, TextInput, Alert } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Header } from '../components/Header';
@@ -69,28 +69,31 @@ export default function ActivityHazardScreen() {
   };
 
   const handleNext = async () => {
-    const finalActivity = activity === 'custom' ? customActivity.trim() : activity;
-    if (!finalActivity || hazards.length === 0) return;
+    try {
+      const finalActivity = activity === 'custom' ? customActivity.trim() : activity;
+      if (!finalActivity || hazards.length === 0) return;
 
-    // Prepare the data to save
-    const assessmentData = {
-      activity: finalActivity,
-      hazards: hazards.map(hazard => ({
-        description: hazard.description,
-        images: hazard.images,
-      })),
-      step: 'activity',
-    };
-
-    await saveTempAssessment(assessmentData); // Save the assessment data
-
-    router.push({
-      pathname: '/add/effects',
-      params: {
+      // Save activity step data with error handling
+      await saveTempAssessment({
         activity: finalActivity,
-        hazards: JSON.stringify(hazards),
-      },
-    });
+        hazards: hazards.map(hazard => ({
+          ...hazard,
+          id: hazard.id || Date.now().toString() // Ensure IDs exist
+        })),
+        step: 'activity'
+      });
+
+      router.push({
+        pathname: '/add/effects',
+        params: { 
+          activity: finalActivity,
+          hazards: JSON.stringify(hazards)
+        }
+      });
+    } catch (error) {
+      console.error('Error saving activity data:', error);
+      Alert.alert('Error', 'Failed to save progress');
+    }
   };
 
   return (

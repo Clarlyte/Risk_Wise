@@ -6,7 +6,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { FontAwesome5 } from '@expo/vector-icons';
 import { Header } from '../components/Header';
 import { SearchBar } from '../components/SearchBar';
-import { useFocusEffect } from '@react-navigation/native';
 
 interface Assessment {
   id: string;
@@ -19,29 +18,35 @@ interface Assessment {
 
 export default function FolderScreen() {
   const router = useRouter();
-  const { folderId, folderName } = useLocalSearchParams();
+  const { folderId, folderName, refresh } = useLocalSearchParams();
   const [assessments, setAssessments] = useState<Assessment[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
 
-  useFocusEffect(
-    React.useCallback(() => {
+  useEffect(() => {
+    if (folderId) {
+      console.log('Current folderId:', folderId, 'Type:', typeof folderId);
       loadAssessments();
-    }, [])
-  );
+    }
+  }, [folderId, refresh]);
 
   const loadAssessments = async () => {
     try {
+      console.log('Loading assessments for folder:', folderId);
       const storedAssessments = await AsyncStorage.getItem('assessments');
       if (storedAssessments) {
         const allAssessments: Assessment[] = JSON.parse(storedAssessments);
-        // Ensure strict comparison of folderId
         const folderAssessments = allAssessments.filter(
-          (assessment) => assessment.folderId === String(folderId)
+          (assessment) => String(assessment.folderId).trim() === String(folderId).trim()
         );
+        console.log('Found assessments:', folderAssessments.length);
+        console.log('Assessment data:', folderAssessments);
         setAssessments(folderAssessments);
+      } else {
+        setAssessments([]);
       }
     } catch (error) {
       console.error('Error loading assessments:', error);
+      setAssessments([]);
     }
   };
   

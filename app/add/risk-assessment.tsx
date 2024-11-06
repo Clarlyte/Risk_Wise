@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, ScrollView, Text } from 'react-native';
+import { View, ScrollView, Text, Alert } from 'react-native';
 import { Stack, useRouter, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Header } from '../components/Header';
@@ -72,19 +72,32 @@ export default function RiskAssessmentScreen() {
   };
 
   const handleNext = async () => {
-    await saveTempAssessment({
-      activity,
-      hazardsWithRisk,
-      step: 'riskAssessment'
-    });
-    
-    router.push({
-      pathname: '/add/controls',
-      params: {
-        activity,
-        hazards: JSON.stringify(hazardsWithRisk),
-      },
-    });
+    try {
+      // Validate risk assessment data
+      if (!hazardsWithRisk.every(h => h.likelihood && h.severity)) {
+        Alert.alert('Error', 'Please complete risk assessment for all hazards');
+        return;
+      }
+
+      await saveTempAssessment({
+        hazardsWithRisk: hazardsWithRisk.map(hazard => ({
+          ...hazard,
+          riskScore: hazard.likelihood * hazard.severity
+        })),
+        step: 'riskAssessment'
+      });
+
+      router.push({
+        pathname: '/add/controls',
+        params: { 
+          activity,
+          hazards: JSON.stringify(hazardsWithRisk)
+        }
+      });
+    } catch (error) {
+      console.error('Error saving risk assessment data:', error);
+      Alert.alert('Error', 'Failed to save progress');
+    }
   };
 
   return (

@@ -49,7 +49,6 @@ export function FolderProvider({ children }: { children: React.ReactNode }) {
     const updatedFolders = [...folders, newFolder];
     await saveFolders(updatedFolders);
     
-    resetAssessment(); // Reset assessments when a new folder is created
     return newFolder;
   };
 

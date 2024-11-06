@@ -76,35 +76,40 @@ export default function GeneratePDFScreen() {
         date: new Date().toISOString(),
         activity: assessmentData.activity,
         hazards: assessmentData.hazardsWithFinalRisk || [],
-        folderId: String(selectedFolderId),
+        folderId: String(selectedFolderId).trim(),
       };
 
-      // Generate PDF
+      console.log('Saving assessment:', assessment);
+
+      // Generate and save PDF
       const pdfPath = await generatePDFContent(assessment);
       
       // Save to permanent storage
       const storedAssessments = await AsyncStorage.getItem('assessments');
       const assessments: Assessment[] = storedAssessments ? JSON.parse(storedAssessments) : [];
-      
-      // Add the new assessment
       const updatedAssessments = [...assessments, { ...assessment, pdfPath }];
-      
       await AsyncStorage.setItem('assessments', JSON.stringify(updatedAssessments));
 
-      Alert.alert('Success', 'Assessment saved successfully', [
-        {
-          text: 'OK',
-          onPress: () => {
-            setAssessmentName('');
-            setSelectedFolderId('');
-            resetAssessment(); 
+      // First clear the temp data
+      await AsyncStorage.removeItem('tempAssessment');
+      await resetAssessment();
+      
+      setAssessmentName('');
+      setSelectedFolderId('');
 
-            router.push('/records');
+      // Then navigate with a small delay to ensure state updates are complete
+      setTimeout(() => {
+        router.push({
+          pathname: '/records/folder',
+          params: {
+            folderId: selectedFolderId,
+            folderName: folders.find(f => f.id === selectedFolderId)?.name,
+            refresh: Date.now().toString() // Convert to string to ensure param change
+          }
+        });
+      }, 100);
 
-            loadFolders();
-          },
-        },
-      ]);
+      Alert.alert('Success', 'Assessment saved successfully');
     } catch (error) {
       console.error('Error saving assessment:', error);
       Alert.alert('Error', 'Failed to save assessment');

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, ScrollView, Text, TextInput, TouchableOpacity } from 'react-native';
+import { View, ScrollView, Text, TextInput, TouchableOpacity, Alert } from 'react-native';
 import { Stack, useRouter, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Header } from '../components/Header';
@@ -191,19 +191,33 @@ export default function EffectsScreen() {
   const { saveTempAssessment } = useAssessment();
 
   const handleNext = async () => {
-    await saveTempAssessment({
-      activity,
-      hazardsWithEffects,
-      step: 'effects'
-    });
-    
-    router.push({
-      pathname: '/add/risk-assessment',
-      params: {
-        activity,
-        hazards: JSON.stringify(hazardsWithEffects),
-      },
-    });
+    try {
+      // Ensure we have all required data
+      if (!hazardsWithEffects.every(h => h.effects?.length > 0)) {
+        Alert.alert('Error', 'Please add at least one effect for each hazard');
+        return;
+      }
+
+      await saveTempAssessment({
+        hazardsWithEffects: hazardsWithEffects.map(hazard => ({
+          ...hazard,
+          effects: hazard.effects || [],
+          existingControls: hazard.existingControls || []
+        })),
+        step: 'effects'
+      });
+
+      router.push({
+        pathname: '/add/risk-assessment',
+        params: { 
+          activity,
+          hazards: JSON.stringify(hazardsWithEffects)
+        }
+      });
+    } catch (error) {
+      console.error('Error saving effects data:', error);
+      Alert.alert('Error', 'Failed to save progress');
+    }
   };
 
   return (

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, ScrollView, Text } from 'react-native';
+import { View, ScrollView, Text, Alert } from 'react-native';
 import { Stack, useRouter, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Header } from '../components/Header';
@@ -66,19 +66,32 @@ export default function FinalRiskScreen() {
   };
 
   const handleNext = async () => {
-    await saveTempAssessment({
-      activity,
-      hazardsWithFinalRisk,
-      step: 'finalRisk'
-    });
-    
-    router.push({
-      pathname: '/add/generate-pdf',
-      params: {
-        activity,
-        hazards: JSON.stringify(hazardsWithFinalRisk),
-      },
-    });
+    try {
+      // Validate final risk assessment
+      if (!hazardsWithFinalRisk.every(h => h.finalLikelihood && h.finalSeverity)) {
+        Alert.alert('Error', 'Please complete final risk assessment for all hazards');
+        return;
+      }
+
+      await saveTempAssessment({
+        hazardsWithFinalRisk: hazardsWithFinalRisk.map(hazard => ({
+          ...hazard,
+          finalRiskScore: hazard.finalLikelihood * hazard.finalSeverity
+        })),
+        step: 'finalRisk'
+      });
+
+      router.push({
+        pathname: '/add/generate-pdf',
+        params: { 
+          activity,
+          hazards: JSON.stringify(hazardsWithFinalRisk)
+        }
+      });
+    } catch (error) {
+      console.error('Error saving final risk data:', error);
+      Alert.alert('Error', 'Failed to save progress');
+    }
   };
 
   const updateFinalRisk = (id: string, field: 'finalLikelihood' | 'finalSeverity', value: number) => {

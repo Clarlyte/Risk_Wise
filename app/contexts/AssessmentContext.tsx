@@ -30,15 +30,35 @@ export function AssessmentProvider({ children }: { children: React.ReactNode }) 
     setHazards([]);
   };
 
-  const resetAssessment = () => {
-    clearAssessmentInputs();
-    setTempAssessment(null);
-    AsyncStorage.removeItem('tempAssessment');
+  const resetAssessment = async () => {
+    try {
+      clearAssessmentInputs();
+      setTempAssessment(null);
+      await AsyncStorage.removeItem('tempAssessment');
+    } catch (error) {
+      console.error('Error resetting assessment:', error);
+      throw new Error('Failed to reset assessment');
+    }
   };
 
   const saveTempAssessment = async (data: any) => {
-    setTempAssessment(data);
-    await AsyncStorage.setItem('tempAssessment', JSON.stringify(data));
+    try {
+      // Get existing data
+      const existingData = await AsyncStorage.getItem('tempAssessment');
+      const existingAssessment = existingData ? JSON.parse(existingData) : {};
+      
+      // Merge with new data
+      const mergedData = {
+        ...existingAssessment,
+        ...data,
+      };
+      
+      setTempAssessment(mergedData);
+      await AsyncStorage.setItem('tempAssessment', JSON.stringify(mergedData));
+    } catch (error) {
+      console.error('Error saving temp assessment:', error);
+      throw new Error('Failed to save temporary assessment data');
+    }
   };
 
   const clearTempAssessment = async () => {

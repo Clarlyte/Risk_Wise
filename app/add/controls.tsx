@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, ScrollView, Text, TextInput, TouchableOpacity } from 'react-native';
+import { View, ScrollView, Text, TextInput, TouchableOpacity, Alert } from 'react-native';
 import { Stack, useRouter, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Header } from '../components/Header';
@@ -218,19 +218,42 @@ export default function ControlsScreen() {
   };
 
   const handleNext = async () => {
-    await saveTempAssessment({
-      activity,
-      hazardsWithControls,
-      step: 'controls'
-    });
-    
-    router.push({
-      pathname: '/add/final-risk',
-      params: {
-        activity,
-        hazards: JSON.stringify(hazardsWithControls),
-      },
-    });
+    try {
+      // Validate controls data
+      if (!hazardsWithControls.every(h => 
+        h.additionalControls?.ac?.length > 0 || 
+        h.additionalControls?.ec?.length > 0 || 
+        h.additionalControls?.ppe?.length > 0
+      )) {
+        Alert.alert('Error', 'Please add at least one control measure for each hazard');
+        return;
+      }
+
+      await saveTempAssessment({
+        hazardsWithControls: hazardsWithControls.map(hazard => ({
+          ...hazard,
+          additionalControls: {
+            ac: hazard.additionalControls?.ac || [],
+            ec: hazard.additionalControls?.ec || [],
+            ppe: hazard.additionalControls?.ppe || []
+          },
+          pointPerson: hazard.pointPerson || '',
+          dueDate: hazard.dueDate || ''
+        })),
+        step: 'controls'
+      });
+
+      router.push({
+        pathname: '/add/final-risk',
+        params: { 
+          activity,
+          hazards: JSON.stringify(hazardsWithControls)
+        }
+      });
+    } catch (error) {
+      console.error('Error saving controls data:', error);
+      Alert.alert('Error', 'Failed to save progress');
+    }
   };
 
   return (
