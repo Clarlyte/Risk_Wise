@@ -18,6 +18,18 @@ function getRiskLevel(score: number) {
   return { text: 'Immediately Dangerous', color: '#F44336' };
 }
 
+async function generatePDFPath(assessmentId: string): Promise<string> {
+  const directory = `${FileSystem.documentDirectory}assessments/`;
+  
+  // Ensure directory exists
+  const dirInfo = await FileSystem.getInfoAsync(directory);
+  if (!dirInfo.exists) {
+    await FileSystem.makeDirectoryAsync(directory, { intermediates: true });
+  }
+  
+  return `${directory}assessment_${assessmentId}.html`;
+}
+
 export async function generatePDFContent(assessment: Assessment): Promise<string> {
   const htmlContent = `
     <!DOCTYPE html>
@@ -85,12 +97,17 @@ export async function generatePDFContent(assessment: Assessment): Promise<string
     </html>
   `;
 
-  const pdfFileName = `assessment_${assessment.id}.html`;
-  const pdfPath = `${FileSystem.documentDirectory}${pdfFileName}`;
+  const pdfPath = await generatePDFPath(assessment.id);
 
-  await FileSystem.writeAsStringAsync(pdfPath, htmlContent, {
-    encoding: FileSystem.EncodingType.UTF8,
-  });
-
-  return pdfPath;
+  try {
+    await FileSystem.writeAsStringAsync(pdfPath, htmlContent, {
+      encoding: FileSystem.EncodingType.UTF8,
+    });
+    
+    // Return the file URL format
+    return `file://${pdfPath}`;
+  } catch (error) {
+    console.error('Error writing PDF file:', error);
+    throw error;
+  }
 } 

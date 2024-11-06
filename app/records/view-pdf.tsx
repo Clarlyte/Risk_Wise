@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, StyleSheet, ActivityIndicator, Text } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Stack, useRouter, useLocalSearchParams } from 'expo-router';
 import { WebView } from 'react-native-webview';
@@ -16,8 +16,31 @@ interface PDFViewerProps {
 
 function PDFViewer({ uri }: PDFViewerProps) {
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  if (!uri) return null;
+  useEffect(() => {
+    // Verify file exists before trying to load it
+    async function checkFile() {
+      try {
+        const fileInfo = await FileSystem.getInfoAsync(uri.replace('file://', ''));
+        if (!fileInfo.exists) {
+          setError('PDF file not found');
+        }
+      } catch (err) {
+        console.error('Error checking file:', err);
+        setError('Error accessing PDF file');
+      }
+    }
+    checkFile();
+  }, [uri]);
+
+  if (error) {
+    return (
+      <View style={styles.errorContainer}>
+        <Text style={styles.errorText}>{error}</Text>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.pdfContainer}>
@@ -25,6 +48,11 @@ function PDFViewer({ uri }: PDFViewerProps) {
         source={{ uri }}
         style={styles.pdf}
         onLoadEnd={() => setIsLoading(false)}
+        onError={(syntheticEvent) => {
+          const { nativeEvent } = syntheticEvent;
+          console.warn('WebView error:', nativeEvent);
+          setError(`Error loading PDF: ${nativeEvent.description}`);
+        }}
         renderLoading={() => (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color="#FC7524" />
@@ -176,5 +204,15 @@ const styles = StyleSheet.create({
   },
   headerIcon: {
     marginRight: 8,
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  errorText: {
+    color: 'red',
+    textAlign: 'center',
   },
 }); 
