@@ -36,6 +36,7 @@ export default function GeneratePDFScreen() {
   const [selectedFolderId, setSelectedFolderId] = useState('');
   const { folders, addFolder, loadFolders } = useFolders();
   const [isAddFolderVisible, setIsAddFolderVisible] = useState(false);
+  const { tempAssessment } = useAssessment();
 
   useFocusEffect(
     React.useCallback(() => {
@@ -75,7 +76,7 @@ export default function GeneratePDFScreen() {
         date: new Date().toISOString(),
         activity: assessmentData.activity,
         hazards: assessmentData.hazardsWithFinalRisk || [],
-        folderId: selectedFolderId,
+        folderId: String(selectedFolderId),
       };
 
       // Generate PDF
@@ -90,16 +91,17 @@ export default function GeneratePDFScreen() {
       
       await AsyncStorage.setItem('assessments', JSON.stringify(updatedAssessments));
 
-      // Clear temporary data
-      await resetAssessment(); // Clear inputs after saving
-
-      await loadFolders();
-
       Alert.alert('Success', 'Assessment saved successfully', [
         {
           text: 'OK',
           onPress: () => {
+            setAssessmentName('');
+            setSelectedFolderId('');
+            resetAssessment(); 
+
             router.push('/records');
+
+            loadFolders();
           },
         },
       ]);

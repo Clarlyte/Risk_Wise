@@ -33,14 +33,18 @@ export default function FolderScreen() {
     try {
       const storedAssessments = await AsyncStorage.getItem('assessments');
       if (storedAssessments) {
-        const allAssessments = JSON.parse(storedAssessments);
-        const folderAssessments = allAssessments.filter((a: Assessment) => a.folderId === folderId);
+        const allAssessments: Assessment[] = JSON.parse(storedAssessments);
+        // Ensure strict comparison of folderId
+        const folderAssessments = allAssessments.filter(
+          (assessment) => assessment.folderId === String(folderId)
+        );
         setAssessments(folderAssessments);
       }
     } catch (error) {
       console.error('Error loading assessments:', error);
     }
   };
+  
 
   const filteredAssessments = assessments.filter(assessment =>
     assessment.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
