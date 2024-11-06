@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Stack, useRouter, useLocalSearchParams } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -18,28 +18,30 @@ interface Assessment {
 
 export default function FolderScreen() {
   const router = useRouter();
-  const { folderId, folderName, refresh } = useLocalSearchParams();
+  const { folderId, folderName } = useLocalSearchParams();
   const [assessments, setAssessments] = useState<Assessment[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    if (folderId) {
-      console.log('Current folderId:', folderId, 'Type:', typeof folderId);
-      loadAssessments();
-    }
-  }, [folderId, refresh]);
-
-  const loadAssessments = async () => {
+  const loadAssessments = useCallback(async () => {
+    if (!folderId) return;
+    
     try {
-      console.log('Loading assessments for folder:', folderId);
+      setIsLoading(true);
       const storedAssessments = await AsyncStorage.getItem('assessments');
+      
       if (storedAssessments) {
         const allAssessments: Assessment[] = JSON.parse(storedAssessments);
-        const folderAssessments = allAssessments.filter(
-          (assessment) => String(assessment.folderId).trim() === String(folderId).trim()
+        
+        // Ensure we're comparing strings and they're exactly equal
+        const currentFolderId = String(folderId).trim();
+        const folderAssessments = allAssessments.filter(assessment => 
+          String(assessment.folderId).trim() === currentFolderId
         );
-        console.log('Found assessments:', folderAssessments.length);
-        console.log('Assessment data:', folderAssessments);
+        
+        console.log('Current folder ID:', currentFolderId);
+        console.log('Found assessments for folder:', folderAssessments.length);
+        
         setAssessments(folderAssessments);
       } else {
         setAssessments([]);
@@ -47,18 +49,21 @@ export default function FolderScreen() {
     } catch (error) {
       console.error('Error loading assessments:', error);
       setAssessments([]);
+    } finally {
+      setIsLoading(false);
     }
-  };
-  
+  }, [folderId]);
 
+  // Load assessments when the folder ID changes
+  useEffect(() => {
+    loadAssessments();
+  }, [loadAssessments, folderId]);
+
+  // Filter assessments based on search query
   const filteredAssessments = assessments.filter(assessment =>
     assessment.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     assessment.activity.toLowerCase().includes(searchQuery.toLowerCase())
   );
-
-  const handleBack = () => {
-    router.push('/records');
-  };
 
   const renderAssessmentItem = ({ item }: { item: Assessment }) => (
     <View style={styles.assessmentItem}>
@@ -91,10 +96,15 @@ export default function FolderScreen() {
     </View>
   );
 
+  const handleBack = () => {
+    router.push('/records'); // This will navigate directly to the records screen
+  };
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
         <Stack.Screen options={{ headerShown: false }} />
+        
         <Header 
           title={folderName as string}
           onBackPress={handleBack}
@@ -106,19 +116,25 @@ export default function FolderScreen() {
           onChangeText={setSearchQuery}
         />
 
-        <FlatList
-          style={styles.list}
-          data={filteredAssessments}
-          renderItem={renderAssessmentItem}
-          keyExtractor={item => item.id}
-          ListEmptyComponent={
-            <Text style={styles.emptyText}>
-              {searchQuery 
-                ? 'No matching assessments found'
-                : 'No assessments in this folder'}
-            </Text>
-          }
-        />
+        {isLoading ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#FC7524" />
+          </View>
+        ) : (
+          <FlatList
+            style={styles.list}
+            data={filteredAssessments}
+            renderItem={renderAssessmentItem}
+            keyExtractor={item => item.id}
+            ListEmptyComponent={
+              <Text style={styles.emptyText}>
+                {searchQuery 
+                  ? 'No matching assessments found'
+                  : 'No assessments in this folder'}
+              </Text>
+            }
+          />
+        )}
       </View>
     </SafeAreaView>
   );
@@ -136,7 +152,6 @@ const styles = StyleSheet.create({
   list: {
     flex: 1,
     backgroundColor: '#F2F1F9',
-    marginTop: 0,
   },
   assessmentItem: {
     backgroundColor: 'white',
@@ -179,5 +194,10 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 20,
     color: '#333',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 }); 
