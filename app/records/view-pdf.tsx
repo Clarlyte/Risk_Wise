@@ -19,16 +19,21 @@ function PDFViewer({ uri }: PDFViewerProps) {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Verify file exists before trying to load it
+    console.log('Attempting to load PDF from:', uri);
     async function checkFile() {
       try {
+        setIsLoading(true);
         const fileInfo = await FileSystem.getInfoAsync(uri.replace('file://', ''));
+        console.log('File info:', fileInfo);
+        
         if (!fileInfo.exists) {
           setError('PDF file not found');
         }
       } catch (err) {
         console.error('Error checking file:', err);
         setError('Error accessing PDF file');
+      } finally {
+        setIsLoading(false);
       }
     }
     checkFile();
@@ -47,12 +52,23 @@ function PDFViewer({ uri }: PDFViewerProps) {
       <WebView
         source={{ uri }}
         style={styles.pdf}
-        onLoadEnd={() => setIsLoading(false)}
+        onLoadStart={() => {
+          console.log('WebView started loading');
+          setIsLoading(true);
+        }}
+        onLoadEnd={() => {
+          console.log('WebView finished loading');
+          setIsLoading(false);
+        }}
         onError={(syntheticEvent) => {
           const { nativeEvent } = syntheticEvent;
           console.warn('WebView error:', nativeEvent);
           setError(`Error loading PDF: ${nativeEvent.description}`);
         }}
+        cacheEnabled={true}
+        domStorageEnabled={true}
+        javaScriptEnabled={true}
+        androidHardwareAccelerationDisabled={false}
         renderLoading={() => (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color="#FC7524" />
