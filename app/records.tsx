@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { FontAwesome5 } from '@expo/vector-icons';
 import { Header } from './components/Header';
 import { SearchBar } from './components/SearchBar';
@@ -13,19 +12,6 @@ import { useFocusEffect } from '@react-navigation/native';
 interface Folder {
   id: string;
   name: string;
-}
-
-interface Assessment {
-  id: string;
-  name: string;
-  date: string;
-  activity: string;
-  hazards: any[];
-  folderId: string;
-}
-
-function validateFolderName(name: string): boolean {
-  return name.trim().length > 0;
 }
 
 export default function RecordsScreen() {

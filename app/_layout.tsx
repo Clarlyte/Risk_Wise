@@ -33,7 +33,7 @@ const CustomTabBar: React.FC<CustomTabBarProps> = ({ state, descriptors, navigat
         const onPress = () => {
           // Update this section
           if (route.name === 'add') {
-            router.push('/add/activity');  // Update the path
+            router.push('/add/activity');  
             return;
           }
 
