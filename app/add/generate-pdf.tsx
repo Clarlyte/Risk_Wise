@@ -12,21 +12,7 @@ import { useFolders } from '../contexts/FolderContext';
 import { useAssessment } from '../contexts/AssessmentContext';
 import { generatePDFContent } from '../utils/pdfGenerator';
 import { inputStyles } from '../styles/input-styles';
-
-interface Folder {
-  id: string;
-  name: string;
-}
-
-interface Assessment {
-  id: string;
-  name: string;
-  date: string;
-  activity: string;
-  hazards: any[];
-  folderId: string;
-  pdfPath?: string;
-}
+import { Assessment } from '../types/pdf';
 
 export default function GeneratePDFScreen() {
   const router = useRouter();

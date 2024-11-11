@@ -1,22 +1,6 @@
 import * as FileSystem from 'expo-file-system';
-import { Asset } from 'expo-asset';
-
-interface Assessment {
-  id: string;
-  name: string;
-  date: string;
-  activity: string;
-  hazards: any[];
-  folderId: string;
-}
-
-function getRiskLevel(score: number) {
-  if (score <= 3) return { text: 'Very Low Risk', color: '#4CAF50' };
-  if (score <= 6) return { text: 'Low Risk', color: '#8BC34A' };
-  if (score <= 12) return { text: 'Medium Risk', color: '#FFEB3B' };
-  if (score <= 15) return { text: 'High Risk', color: '#FF9800' };
-  return { text: 'Immediately Dangerous', color: '#F44336' };
-}
+import { Assessment } from '../types/pdf';
+import { getRiskLevel } from '../types/risk';
 
 export async function generatePDFContent(assessment: Assessment): Promise<string> {
   const htmlContent = `
@@ -75,7 +59,7 @@ export async function generatePDFContent(assessment: Assessment): Promise<string
                 </ul>
 
                 <div class="risk-score" style="background-color: ${riskLevel.color}20; color: ${riskLevel.color}">
-                  Risk Score: ${hazard.riskScore} - ${riskLevel.text}
+                  Risk Score: ${hazard.riskScore} - ${riskLevel.description}
                 </div>
               </div>
             `;

@@ -6,15 +6,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { FontAwesome5 } from '@expo/vector-icons';
 import { Header } from '../components/Header';
 import { SearchBar } from '../components/SearchBar';
-
-interface Assessment {
-  id: string;
-  name: string;
-  date: string;
-  activity: string;
-  hazards: any[];
-  folderId: string;
-}
+import { Assessment } from '../types/pdf';
 
 export default function FolderScreen() {
   const router = useRouter();

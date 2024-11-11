@@ -79,3 +79,4 @@ export function getRiskLevel(score: number): {
     };
   }
 }
+

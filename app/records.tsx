@@ -8,11 +8,7 @@ import { FolderNameDialog } from './components/FolderNameDialog';
 import { useRouter } from 'expo-router';
 import { useFolders } from './contexts/FolderContext';
 import { useFocusEffect } from '@react-navigation/native';
-
-interface Folder {
-  id: string;
-  name: string;
-}
+import { Folder } from './types/pdf';
 
 export default function RecordsScreen() {
   const router = useRouter();

@@ -1,11 +1,7 @@
 import React, { createContext, useContext, useState, useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAssessment } from './AssessmentContext'; // Import the Assessment context
-
-interface Folder {
-  id: string;
-  name: string;
-}
+import { Folder } from '../types/pdf';
 
 interface FolderContextType {
   folders: Folder[];
