@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
 import { Stack, useRouter, useLocalSearchParams, useFocusEffect } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -23,6 +23,7 @@ export default function GeneratePDFScreen() {
   const { folders, addFolder, loadFolders } = useFolders();
   const [isAddFolderVisible, setIsAddFolderVisible] = useState(false);
   const { tempAssessment } = useAssessment();
+  const [isSaving, setIsSaving] = useState(false);
 
   useFocusEffect(
     React.useCallback(() => {
@@ -42,19 +43,27 @@ export default function GeneratePDFScreen() {
   };
 
   const saveAssessment = async () => {
-    if (!assessmentName.trim() || !selectedFolderId) {
-      Alert.alert('Error', 'Please fill in all fields');
+    if (!assessmentName.trim() || !selectedFolderId || isSaving) {
       return;
     }
 
+    setIsSaving(true);
+
     try {
       const tempData = await AsyncStorage.getItem('tempAssessment');
+      console.log('Raw temp data:', tempData);
+      
       if (!tempData) {
         Alert.alert('Error', 'Assessment data not found');
         return;
       }
 
       const assessmentData = JSON.parse(tempData);
+      console.log('Parsed assessment data:', {
+        activity: assessmentData.activity,
+        hazardsCount: assessmentData.hazardsWithFinalRisk?.length,
+        fullHazards: assessmentData.hazardsWithFinalRisk,
+      });
       
       const assessment: Assessment = {
         id: Date.now().toString(),
@@ -65,15 +74,22 @@ export default function GeneratePDFScreen() {
         folderId: String(selectedFolderId).trim(),
       };
 
-      console.log('Saving assessment:', assessment);
+      console.log('Final formatted assessment:', assessment);
 
       // Generate and save PDF
       const pdfPath = await generatePDFContent(assessment);
+      console.log('Generated PDF path:', pdfPath);
       
       // Save to permanent storage
       const storedAssessments = await AsyncStorage.getItem('assessments');
       const assessments: Assessment[] = storedAssessments ? JSON.parse(storedAssessments) : [];
       const updatedAssessments = [...assessments, { ...assessment, pdfPath }];
+      
+      console.log('Saving to AsyncStorage:', {
+        totalAssessments: updatedAssessments.length,
+        newAssessment: { ...assessment, pdfPath }
+      });
+
       await AsyncStorage.setItem('assessments', JSON.stringify(updatedAssessments));
 
       // First clear the temp data
@@ -99,6 +115,8 @@ export default function GeneratePDFScreen() {
     } catch (error) {
       console.error('Error saving assessment:', error);
       Alert.alert('Error', 'Failed to save assessment');
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -138,13 +156,19 @@ export default function GeneratePDFScreen() {
           <TouchableOpacity 
             style={[
               inputStyles.createButton,
-              (!assessmentName.trim() || !selectedFolderId) && inputStyles.createButtonDisabled
+              ((!assessmentName.trim() || !selectedFolderId) || isSaving) && inputStyles.createButtonDisabled
             ]}
             onPress={saveAssessment}
-            disabled={!assessmentName.trim() || !selectedFolderId}
+            disabled={!assessmentName.trim() || !selectedFolderId || isSaving}
           >
-            <FontAwesome5 name="save" size={20} color="white" />
-            <Text style={inputStyles.createButtonText}>Create Assessment</Text>
+            {isSaving ? (
+              <ActivityIndicator size="small" color="white" />
+            ) : (
+              <>
+                <FontAwesome5 name="save" size={20} color="white" />
+                <Text style={inputStyles.createButtonText}>Create Assessment</Text>
+              </>
+            )}
           </TouchableOpacity>
         </View>
 
@@ -160,10 +184,6 @@ export default function GeneratePDFScreen() {
             pathname: '/add/final-risk',
             params: { activity, hazards: hazardsParam }
           })}
-          onNext={saveAssessment}
-          nextDisabled={!assessmentName.trim() || !selectedFolderId}
-          nextLabel="Finish"
-          nextIcon="save"
         />
       </View>
     </SafeAreaView>
