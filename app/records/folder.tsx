@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Stack, useRouter, useLocalSearchParams } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -7,6 +7,7 @@ import { FontAwesome5 } from '@expo/vector-icons';
 import { Header } from '../components/Header';
 import { SearchBar } from '../components/SearchBar';
 import { Assessment } from '../types/pdf';
+import * as FileSystem from 'expo-file-system';
 
 export default function FolderScreen() {
   const router = useRouter();
@@ -69,13 +70,7 @@ export default function FolderScreen() {
       <View style={styles.assessmentActions}>
         <TouchableOpacity 
           style={styles.actionButton}
-          onPress={() => router.push({
-            pathname: '/records/view-pdf',
-            params: { 
-              assessmentId: item.id,
-              assessmentName: item.name
-            }
-          })}
+          onPress={() => handleViewPDF(item)}
         >
           <FontAwesome5 name="file-pdf" size={20} color="#1294D5" />
           <Text style={styles.actionButtonText}>View PDF</Text>
@@ -90,6 +85,32 @@ export default function FolderScreen() {
 
   const handleBack = () => {
     router.push('/records'); // This will navigate directly to the records screen
+  };
+
+  const handleViewPDF = async (item: Assessment) => {
+    if (!item.pdfPath) {
+      Alert.alert('Error', 'PDF file path not found');
+      return;
+    }
+
+    try {
+      const fileInfo = await FileSystem.getInfoAsync(item.pdfPath);
+      if (!fileInfo.exists) {
+        Alert.alert('Error', 'PDF file not found');
+        return;
+      }
+
+      router.push({
+        pathname: '/records/view-pdf',
+        params: { 
+          assessmentId: item.id,
+          assessmentName: item.name
+        }
+      });
+    } catch (error) {
+      console.error('Error checking PDF file:', error);
+      Alert.alert('Error', 'Unable to access PDF file');
+    }
   };
 
   return (

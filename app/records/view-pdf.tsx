@@ -23,11 +23,19 @@ function PDFViewer({ uri }: PDFViewerProps) {
     async function checkFile() {
       try {
         setIsLoading(true);
-        const fileInfo = await FileSystem.getInfoAsync(uri.replace('file://', ''));
+        const filePath = uri.replace('file://', '');
+        const fileInfo = await FileSystem.getInfoAsync(filePath);
         console.log('File info:', fileInfo);
         
         if (!fileInfo.exists) {
           setError('PDF file not found');
+          return;
+        }
+
+        const content = await FileSystem.readAsStringAsync(filePath);
+        if (!content) {
+          setError('PDF file is empty or corrupted');
+          return;
         }
       } catch (err) {
         console.error('Error checking file:', err);
@@ -50,7 +58,13 @@ function PDFViewer({ uri }: PDFViewerProps) {
   return (
     <View style={styles.pdfContainer}>
       <WebView
-        source={{ uri }}
+        source={{ 
+          uri: `file://${uri}`,
+          headers: {
+            'Cache-Control': 'no-cache',
+            'Content-Type': 'text/html'
+          }
+        }}
         style={styles.pdf}
         onLoadStart={() => {
           console.log('WebView started loading');
@@ -75,6 +89,11 @@ function PDFViewer({ uri }: PDFViewerProps) {
           </View>
         )}
         startInLoadingState={true}
+        originWhitelist={['*']}
+        mixedContentMode="always"
+        allowFileAccess={true}
+        allowUniversalAccessFromFileURLs={true}
+        allowFileAccessFromFileURLs={true}
       />
       {isLoading && (
         <View style={styles.loadingOverlay}>
@@ -171,14 +190,18 @@ export default function ViewPDFScreen() {
           }
         />
 
-        {pdfUrl && <PDFViewer uri={pdfUrl} />}
+        <View style={styles.contentContainer}>
+          {pdfUrl && <PDFViewer uri={pdfUrl} />}
+        </View>
 
-        <BottomNavigation
-          onBack={handleBack}
-          onNext={handleShare}
-          nextLabel="Share PDF"
-          nextIcon="share-alt"
-        />
+        <View style={styles.bottomNavigationContainer}>
+          <BottomNavigation
+            onBack={handleBack}
+            onNext={handleShare}
+            nextLabel="Share PDF"
+            nextIcon="share-alt"
+          />
+        </View>
       </View>
     </SafeAreaView>
   );
@@ -192,6 +215,11 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F2F1F9',
+    position: 'relative',
+  },
+  contentContainer: {
+    flex: 1,
+    marginBottom: 80,
   },
   pdfContainer: {
     flex: 1,
@@ -201,6 +229,14 @@ const styles = StyleSheet.create({
   pdf: {
     flex: 1,
     backgroundColor: '#F2F1F9',
+  },
+  bottomNavigationContainer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: '#F2F1F9',
+    zIndex: 1000,
   },
   loadingContainer: {
     flex: 1,

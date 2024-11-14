@@ -23,6 +23,23 @@ export async function generatePDFContent(assessment: Assessment): Promise<string
             padding: 5px;
             border-radius: 4px;
             display: inline-block;
+            margin: 10px 0;
+          }
+          .controls-section {
+            margin: 15px 0;
+            padding: 10px;
+            background-color: #fff;
+            border-radius: 4px;
+          }
+          .control-type {
+            margin: 10px 0;
+            padding-left: 10px;
+          }
+          .recommendations {
+            margin-top: 15px;
+            padding: 10px;
+            background-color: #e3f2fd;
+            border-radius: 4px;
           }
         </style>
       </head>
@@ -37,9 +54,11 @@ export async function generatePDFContent(assessment: Assessment): Promise<string
         </div>
 
         <div class="section">
-          <h2>Hazards and Controls</h2>
+          <h2>Hazards Assessment</h2>
           ${assessment.hazards.map((hazard, index) => {
-            const riskLevel = getRiskLevel(hazard.riskScore);
+            const initialRiskLevel = getRiskLevel(hazard.riskScore);
+            const finalRiskLevel = getRiskLevel(hazard.finalRiskScore);
+            
             return `
               <div class="hazard">
                 <h3>Hazard ${index + 1}: ${hazard.description}</h3>
@@ -58,8 +77,81 @@ export async function generatePDFContent(assessment: Assessment): Promise<string
                   `).join('')}
                 </ul>
 
-                <div class="risk-score" style="background-color: ${riskLevel.color}20; color: ${riskLevel.color}">
-                  Risk Score: ${hazard.riskScore} - ${riskLevel.description}
+                <h4>Initial Risk Assessment:</h4>
+                <div>
+                  <p>Likelihood: ${hazard.likelihood}</p>
+                  <p>Severity: ${hazard.severity}</p>
+                  <div class="risk-score" style="background-color: ${initialRiskLevel.color}20; color: ${initialRiskLevel.color}">
+                    Initial Risk Score: ${hazard.riskScore} - ${initialRiskLevel.description}
+                  </div>
+                </div>
+
+                <div class="controls-section">
+                  <h4>Additional Controls:</h4>
+                  
+                  ${hazard.additionalControls.ac.length > 0 ? `
+                    <div class="control-type">
+                      <h5>Administrative Controls:</h5>
+                      <ul>
+                        ${hazard.additionalControls.ac.map((control: string) => `
+                          <li>${control}</li>
+                        `).join('')}
+                      </ul>
+                    </div>
+                  ` : ''}
+                  
+                  ${hazard.additionalControls.ec.length > 0 ? `
+                    <div class="control-type">
+                      <h5>Engineering Controls:</h5>
+                      <ul>
+                        ${hazard.additionalControls.ec.map((control: string) => `
+                          <li>${control}</li>
+                        `).join('')}
+                      </ul>
+                    </div>
+                  ` : ''}
+                  
+                  ${hazard.additionalControls.ppe.length > 0 ? `
+                    <div class="control-type">
+                      <h5>PPE Required:</h5>
+                      <ul>
+                        ${hazard.additionalControls.ppe.map((control: string) => `
+                          <li>${control}</li>
+                        `).join('')}
+                      </ul>
+                    </div>
+                  ` : ''}
+
+                  <div class="control-type">
+                    <h5>Implementation:</h5>
+                    <p>Point Person: ${hazard.pointPerson}</p>
+                    <p>Due Date: ${hazard.dueDate}</p>
+                  </div>
+                </div>
+
+                <h4>Final Risk Assessment:</h4>
+                <div>
+                  <p>Likelihood: ${hazard.finalLikelihood}</p>
+                  <p>Severity: ${hazard.finalSeverity}</p>
+                  <div class="risk-score" style="background-color: ${finalRiskLevel.color}20; color: ${finalRiskLevel.color}">
+                    Final Risk Score: ${hazard.finalRiskScore} - ${finalRiskLevel.description}
+                  </div>
+                </div>
+
+                <div class="recommendations">
+                  <h4>Recommendations:</h4>
+                  <p>${
+                    hazard.finalRiskScore > hazard.riskScore 
+                      ? 'Warning: Risk level has increased. Additional controls may be needed.'
+                      : hazard.finalRiskScore === hazard.riskScore
+                      ? 'Controls have not reduced risk level. Consider implementing additional controls.'
+                      : `Risk level has been reduced from ${initialRiskLevel.description} to ${finalRiskLevel.description}. Continue monitoring and maintaining controls.`
+                  }</p>
+                  ${
+                    hazard.finalRiskScore > 12 
+                      ? '<p><strong>High Risk Alert:</strong> Immediate action required. Consider stopping activity until additional controls are implemented.</p>'
+                      : ''
+                  }
                 </div>
               </div>
             `;
@@ -69,12 +161,24 @@ export async function generatePDFContent(assessment: Assessment): Promise<string
     </html>
   `;
 
-  const pdfFileName = `assessment_${assessment.id}.html`;
-  const pdfPath = `${FileSystem.documentDirectory}${pdfFileName}`;
+  try {
+    const directory = `${FileSystem.documentDirectory}ExponentExperienceData/@clarlyte/RiskWise/`;
+    const pdfFileName = `assessment_${assessment.id}.html`;
+    const pdfPath = `${directory}${pdfFileName}`;
 
-  await FileSystem.writeAsStringAsync(pdfPath, htmlContent, {
-    encoding: FileSystem.EncodingType.UTF8,
-  });
+    const dirInfo = await FileSystem.getInfoAsync(directory);
+    if (!dirInfo.exists) {
+      await FileSystem.makeDirectoryAsync(directory, { intermediates: true });
+    }
 
-  return pdfPath;
+    await FileSystem.writeAsStringAsync(pdfPath, htmlContent, {
+      encoding: FileSystem.EncodingType.UTF8,
+    });
+
+    console.log('PDF saved at:', pdfPath);
+    return pdfPath;
+  } catch (error) {
+    console.error('Error generating PDF:', error);
+    throw error;
+  }
 } 
