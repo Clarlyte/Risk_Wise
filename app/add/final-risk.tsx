@@ -157,7 +157,7 @@ export default function FinalRiskScreen() {
                     />
                     
                     <View style={inputStyles.riskScore}>
-                      <Text style={inputStyles.scoreLabel}>Score:</Text>
+                      <Text style={inputStyles.scoreLabel}>Risk Score:</Text>
                       <Text style={[inputStyles.score, { color: finalRiskLevel.color }]}>
                         {hazard.finalRiskScore}
                       </Text>

@@ -17,34 +17,22 @@ interface PDFViewerProps {
 function PDFViewer({ uri }: PDFViewerProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [htmlContent, setHtmlContent] = useState<string>('');
+  const [webViewLoaded, setWebViewLoaded] = useState(false);
 
   useEffect(() => {
-    console.log('Attempting to load PDF from:', uri);
-    async function checkFile() {
+    console.log('Attempting to load HTML from:', uri);
+    async function loadHTML() {
       try {
-        setIsLoading(true);
-        const filePath = uri.replace('file://', '');
-        const fileInfo = await FileSystem.getInfoAsync(filePath);
-        console.log('File info:', fileInfo);
-        
-        if (!fileInfo.exists) {
-          setError('PDF file not found');
-          return;
-        }
-
-        const content = await FileSystem.readAsStringAsync(filePath);
-        if (!content) {
-          setError('PDF file is empty or corrupted');
-          return;
-        }
+        const content = await FileSystem.readAsStringAsync(uri);
+        setHtmlContent(content);
+        console.log('HTML content loaded, length:', content.length);
       } catch (err) {
-        console.error('Error checking file:', err);
-        setError('Error accessing PDF file');
-      } finally {
-        setIsLoading(false);
+        console.error('Error loading HTML:', err);
+        setError('Error loading file content');
       }
     }
-    checkFile();
+    loadHTML();
   }, [uri]);
 
   if (error) {
@@ -59,43 +47,35 @@ function PDFViewer({ uri }: PDFViewerProps) {
     <View style={styles.pdfContainer}>
       <WebView
         source={{ 
-          uri: `file://${uri}`,
-          headers: {
-            'Cache-Control': 'no-cache',
-            'Content-Type': 'text/html'
-          }
+          html: htmlContent,
+          baseUrl: ''
         }}
-        style={styles.pdf}
+        style={[
+          styles.pdf,
+          !webViewLoaded && styles.hidden
+        ]}
         onLoadStart={() => {
           console.log('WebView started loading');
+          setWebViewLoaded(false);
           setIsLoading(true);
         }}
         onLoadEnd={() => {
           console.log('WebView finished loading');
+          setWebViewLoaded(true);
           setIsLoading(false);
         }}
         onError={(syntheticEvent) => {
           const { nativeEvent } = syntheticEvent;
           console.warn('WebView error:', nativeEvent);
-          setError(`Error loading PDF: ${nativeEvent.description}`);
+          setError(`Error loading content: ${nativeEvent.description}`);
+          setIsLoading(false);
         }}
-        cacheEnabled={true}
-        domStorageEnabled={true}
-        javaScriptEnabled={true}
-        androidHardwareAccelerationDisabled={false}
-        renderLoading={() => (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#FC7524" />
-          </View>
-        )}
-        startInLoadingState={true}
         originWhitelist={['*']}
-        mixedContentMode="always"
-        allowFileAccess={true}
-        allowUniversalAccessFromFileURLs={true}
-        allowFileAccessFromFileURLs={true}
+        javaScriptEnabled={true}
+        domStorageEnabled={true}
+        scalesPageToFit={true}
       />
-      {isLoading && (
+      {isLoading && !webViewLoaded && (
         <View style={styles.loadingOverlay}>
           <ActivityIndicator size="large" color="#FC7524" />
         </View>
@@ -120,8 +100,11 @@ export default function ViewPDFScreen() {
       if (storedAssessments) {
         const assessments = JSON.parse(storedAssessments);
         const assessment = assessments.find((a: any) => a.id === assessmentId);
-        if (assessment && assessment.pdfPath) {
-          setPdfUrl(assessment.pdfPath);
+        if (assessment && assessment.htmlPath) {
+          console.log('Found HTML path:', assessment.htmlPath);
+          setPdfUrl(assessment.htmlPath);
+        } else {
+          console.error('No HTML path found for assessment:', assessmentId);
         }
       }
     } catch (error) {
@@ -245,9 +228,10 @@ const styles = StyleSheet.create({
   },
   loadingOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+    backgroundColor: '#F2F1F9',
     justifyContent: 'center',
     alignItems: 'center',
+    zIndex: 1000,
   },
   headerActions: {
     flexDirection: 'row',
@@ -266,5 +250,8 @@ const styles = StyleSheet.create({
   errorText: {
     color: 'red',
     textAlign: 'center',
+  },
+  hidden: {
+    opacity: 0,
   },
 }); 

@@ -128,7 +128,7 @@ export function HazardInput({ onSave, onCancel }: HazardInputProps) {
 const styles = StyleSheet.create({
   container: {
     backgroundColor: 'white',
-    padding: 16,
+    padding: 0,
     borderRadius: 8,
     marginBottom: 16,
   },

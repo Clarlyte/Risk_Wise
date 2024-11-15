@@ -88,15 +88,16 @@ export default function FolderScreen() {
   };
 
   const handleViewPDF = async (item: Assessment) => {
-    if (!item.pdfPath) {
-      Alert.alert('Error', 'PDF file path not found');
+    if (!item.htmlPath) {
+      Alert.alert('Error', 'File path not found');
       return;
     }
 
     try {
-      const fileInfo = await FileSystem.getInfoAsync(item.pdfPath);
+      const fileInfo = await FileSystem.getInfoAsync(item.htmlPath);
+      console.log('File info:', fileInfo); // Add this for debugging
       if (!fileInfo.exists) {
-        Alert.alert('Error', 'PDF file not found');
+        Alert.alert('Error', 'File not found');
         return;
       }
 
@@ -108,8 +109,8 @@ export default function FolderScreen() {
         }
       });
     } catch (error) {
-      console.error('Error checking PDF file:', error);
-      Alert.alert('Error', 'Unable to access PDF file');
+      console.error('Error checking file:', error);
+      Alert.alert('Error', 'Unable to access file');
     }
   };
 

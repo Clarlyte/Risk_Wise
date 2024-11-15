@@ -163,22 +163,22 @@ export async function generatePDFContent(assessment: Assessment): Promise<string
 
   try {
     const directory = `${FileSystem.documentDirectory}ExponentExperienceData/@clarlyte/RiskWise/`;
-    const pdfFileName = `assessment_${assessment.id}.html`;
-    const pdfPath = `${directory}${pdfFileName}`;
+    const fileName = `${assessment.name}_assessment.html`;
+    const filePath = `${directory}${fileName}`;
 
     const dirInfo = await FileSystem.getInfoAsync(directory);
     if (!dirInfo.exists) {
       await FileSystem.makeDirectoryAsync(directory, { intermediates: true });
     }
 
-    await FileSystem.writeAsStringAsync(pdfPath, htmlContent, {
+    await FileSystem.writeAsStringAsync(filePath, htmlContent, {
       encoding: FileSystem.EncodingType.UTF8,
     });
 
-    console.log('PDF saved at:', pdfPath);
-    return pdfPath;
+    console.log('HTML saved at:', filePath);
+    return filePath;
   } catch (error) {
-    console.error('Error generating PDF:', error);
+    console.error('Error generating HTML:', error);
     throw error;
   }
 } 

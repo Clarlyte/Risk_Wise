@@ -6,7 +6,7 @@ export interface Assessment {
     activity: string;
     hazards: any[];
     folderId: string;
-    pdfPath?: string;
+    htmlPath?: string;
   }
 
   export interface Folder {

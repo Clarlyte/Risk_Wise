@@ -13,6 +13,7 @@ import { useAssessment } from '../contexts/AssessmentContext';
 import { generatePDFContent } from '../utils/pdfGenerator';
 import { inputStyles } from '../styles/input-styles';
 import { Assessment } from '../types/pdf';
+import * as FileSystem from 'expo-file-system';
 
 export default function GeneratePDFScreen() {
   const router = useRouter();
@@ -80,15 +81,34 @@ export default function GeneratePDFScreen() {
       const pdfPath = await generatePDFContent(assessment);
       console.log('Generated PDF path:', pdfPath);
       
-      // Save to permanent storage
+      // Check if PDF exists
+      const pdfExists = await FileSystem.getInfoAsync(pdfPath);
+      if (!pdfExists.exists) {
+        throw new Error('PDF generation failed - File not found');
+      }
+
+      // Verify file size to ensure it's not empty
+      if (pdfExists.size === 0) {
+        await FileSystem.deleteAsync(pdfPath);
+        throw new Error('PDF generation failed - File is empty');
+      }
+
+      // Continue with saving to storage
       const storedAssessments = await AsyncStorage.getItem('assessments');
       const assessments: Assessment[] = storedAssessments ? JSON.parse(storedAssessments) : [];
-      const updatedAssessments = [...assessments, { ...assessment, pdfPath }];
+      const updatedAssessments = [...assessments, { ...assessment, htmlPath: pdfPath }];
       
       console.log('Saving to AsyncStorage:', {
         totalAssessments: updatedAssessments.length,
-        newAssessment: { ...assessment, pdfPath }
+        newAssessment: { ...assessment, htmlPath: pdfPath }
       });
+      const { exists } = await FileSystem.getInfoAsync(pdfPath);
+      if (!exists) {
+        console.error('PDF file not found at path:', pdfPath);
+      }
+
+      console.log('PDF Path:', pdfPath);
+
 
       await AsyncStorage.setItem('assessments', JSON.stringify(updatedAssessments));
 
@@ -114,7 +134,12 @@ export default function GeneratePDFScreen() {
       Alert.alert('Success', 'Assessment saved successfully');
     } catch (error) {
       console.error('Error saving assessment:', error);
-      Alert.alert('Error', 'Failed to save assessment');
+      Alert.alert(
+        'Error', 
+        error instanceof Error 
+          ? error.message 
+          : 'Failed to save assessment'
+      );
     } finally {
       setIsSaving(false);
     }
