@@ -52,6 +52,11 @@ export function HazardInput({ onSave, onCancel }: HazardInputProps) {
     onCancel();
   };
 
+  const isValid = () => {
+    const description = selectedHazard === 'custom' ? customDescription.trim() : selectedHazard;
+    return description && images.length > 0;
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.topSection}>
@@ -103,10 +108,17 @@ export function HazardInput({ onSave, onCancel }: HazardInputProps) {
           <Text style={styles.cancelButtonText}>Cancel</Text>
         </TouchableOpacity>
         <TouchableOpacity 
-          style={[styles.button, styles.saveButton]} 
+          style={[
+            styles.button,
+            isValid() ? styles.saveButton : styles.saveButtonDisabled
+          ]} 
           onPress={handleSave}
+          disabled={!isValid()}
         >
-          <Text style={styles.saveButtonText}>Add Hazard</Text>
+          <Text style={[
+            styles.saveButtonText,
+            !isValid() && styles.saveButtonTextDisabled
+          ]}>Add Hazard</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -155,11 +167,13 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     gap: 8,
     marginBottom: 16,
+    width: '100%',
   },
   previewImage: {
-    width: 80,
-    height: 80,
-    borderRadius: 4,
+    width: '100%',
+    height: 200,
+    borderRadius: 8,
+    resizeMode: 'cover',
   },
   buttons: {
     flexDirection: 'row',
@@ -183,6 +197,12 @@ const styles = StyleSheet.create({
   },
   saveButtonText: {
     color: 'white',
+  },
+  saveButtonDisabled: {
+    backgroundColor: '#E5E5E5',
+  },
+  saveButtonTextDisabled: {
+    color: '#999',
   },
 });
 

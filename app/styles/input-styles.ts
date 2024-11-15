@@ -127,24 +127,30 @@ export const inputStyles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginTop: 16,
+    gap: 8,
   },
   riskScoreContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    flexWrap: 'wrap',
     gap: 8,
   },
   scoreLabel: {
     fontSize: 14,
+    fontWeight: 'bold',
     color: '#666',
+    minWidth: 50,
   },
   scoreValue: {
     fontSize: 16,
     fontWeight: 'bold',
+    minWidth: 30,
+    textAlign: 'center',
   },
   score: {
     fontSize: 16,
     fontWeight: 'bold',
+    minWidth: 30,
+    textAlign: 'center',
   },
   riskLevel: {
     fontSize: 14,
@@ -155,6 +161,8 @@ export const inputStyles = StyleSheet.create({
     borderRadius: 4,
     borderWidth: 1,
     borderColor: '#eee',
+    minWidth: 160,
+    textAlign: 'center',
   },
 
   // Control Styles

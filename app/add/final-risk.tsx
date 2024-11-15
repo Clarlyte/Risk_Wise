@@ -127,9 +127,9 @@ export default function FinalRiskScreen() {
                   {/* Initial Risk Section */}
                   <View style={inputStyles.riskSection}>
                     <Text style={inputStyles.riskSectionTitle}>Initial Risk</Text>
-                    <View style={inputStyles.riskScoreContainer}>
-                      <Text style={inputStyles.scoreLabel}>Score:</Text>
-                      <Text style={[inputStyles.scoreValue, { color: initialRiskLevel.color }]}>
+                    <View style={inputStyles.riskScore}>
+                      <Text style={inputStyles.scoreLabel}>Risk Score:</Text>
+                      <Text style={[inputStyles.score, { color: initialRiskLevel.color }]}>
                         {hazard.riskScore}
                       </Text>
                       <Text style={[inputStyles.riskLevel, { color: initialRiskLevel.color }]}>
@@ -156,9 +156,9 @@ export default function FinalRiskScreen() {
                       onChange={(value) => updateFinalRisk(hazard.id, 'finalSeverity', Number(value))}
                     />
                     
-                    <View style={inputStyles.riskScoreContainer}>
+                    <View style={inputStyles.riskScore}>
                       <Text style={inputStyles.scoreLabel}>Score:</Text>
-                      <Text style={[inputStyles.scoreValue, { color: finalRiskLevel.color }]}>
+                      <Text style={[inputStyles.score, { color: finalRiskLevel.color }]}>
                         {hazard.finalRiskScore}
                       </Text>
                       <Text style={[inputStyles.riskLevel, { color: finalRiskLevel.color }]}>

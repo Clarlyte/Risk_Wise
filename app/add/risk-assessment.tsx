@@ -130,9 +130,12 @@ export default function RiskAssessmentScreen() {
                   />
                   
                   <View style={inputStyles.riskScore}>
-                    <Text style={inputStyles.label}>Risk Score: </Text>
+                    <Text style={inputStyles.scoreLabel}> Risk Score:</Text>
                     <Text style={[inputStyles.score, { color: riskLevel.color }]}>
-                      {hazard.riskScore} - {riskLevel.text}
+                      {hazard.riskScore}
+                    </Text>
+                    <Text style={[inputStyles.riskLevel, { color: riskLevel.color }]}>
+                      {riskLevel.text}
                     </Text>
                   </View>
                 </View>
