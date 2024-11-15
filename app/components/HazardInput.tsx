@@ -45,6 +45,13 @@ export function HazardInput({ onSave, onCancel }: HazardInputProps) {
     setImages([]);
   };
 
+  const handleCancel = () => {
+    setSelectedHazard('');
+    setCustomDescription('');
+    setImages([]);
+    onCancel();
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.topSection}>
@@ -91,7 +98,7 @@ export function HazardInput({ onSave, onCancel }: HazardInputProps) {
       <View style={styles.buttons}>
         <TouchableOpacity 
           style={[styles.button, styles.cancelButton]} 
-          onPress={onCancel}
+          onPress={handleCancel}
         >
           <Text style={styles.cancelButtonText}>Cancel</Text>
         </TouchableOpacity>
@@ -123,6 +130,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   cameraButton: {
+    bottom: -6,
+    right: 0,
     padding: 12,
     borderWidth: 1,
     borderColor: '#1294D5',
@@ -167,7 +176,7 @@ const styles = StyleSheet.create({
     borderColor: '#ccc',
   },
   saveButton: {
-    backgroundColor: '#1294D5',
+    backgroundColor: '#007BFF',
   },
   cancelButtonText: {
     color: '#666',

@@ -35,6 +35,16 @@ export default function ActivityHazardScreen() {
     { label: 'Custom Activity', value: 'custom' },
   ];
 
+  const hazardOptions = [
+    { label: 'Falling Objects', value: 'Falling Objects' },
+    { label: 'Electrical Hazards', value: 'Electrical Hazards' },
+    { label: 'Slips and Trips', value: 'Slips and Trips' },
+    { label: 'Custom Hazard', value: 'custom' },
+  ];
+
+  const [selectedHazard, setSelectedHazard] = useState('');
+  const [customHazard, setCustomHazard] = useState('');
+
   const handleActivityChange = (value: string | number) => {
     setSelectedActivity(value.toString());
   };
