@@ -8,6 +8,7 @@ import { Header } from '../components/Header';
 import { SearchBar } from '../components/SearchBar';
 import { Assessment } from '../types/pdf';
 import * as FileSystem from 'expo-file-system';
+import { generateExcelFile } from '../utils/excelGenerator';
 
 export default function FolderScreen() {
   const router = useRouter();
@@ -75,6 +76,13 @@ export default function FolderScreen() {
           <FontAwesome5 name="file-pdf" size={20} color="#1294D5" />
           <Text style={styles.actionButtonText}>View PDF</Text>
         </TouchableOpacity>
+        <TouchableOpacity 
+          style={styles.actionButton}
+          onPress={() => handleDownloadExcel(item)}
+        >
+          <FontAwesome5 name="file-excel" size={20} color="#1294D5" />
+          <Text style={styles.actionButtonText}>Download</Text>
+        </TouchableOpacity>
         <TouchableOpacity style={styles.actionButton}>
           <FontAwesome5 name="share-alt" size={20} color="#1294D5" />
           <Text style={styles.actionButtonText}>Share</Text>
@@ -111,6 +119,20 @@ export default function FolderScreen() {
     } catch (error) {
       console.error('Error checking file:', error);
       Alert.alert('Error', 'Unable to access file');
+    }
+  };
+
+  const handleDownloadExcel = async (assessment: Assessment) => {
+    try {
+      await generateExcelFile(assessment);
+      // No need for Alert here since the share dialog will handle the user interaction
+    } catch (error) {
+      console.error('Error downloading excel:', error);
+      Alert.alert('Error', 
+        error instanceof Error 
+          ? error.message 
+          : 'Failed to generate Excel file'
+      );
     }
   };
 
@@ -193,16 +215,16 @@ const styles = StyleSheet.create({
   assessmentActions: {
     flexDirection: 'row',
     justifyContent: 'flex-start',
-    gap: 16,
+    gap: 12,
   },
   actionButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 6,
   },
   actionButtonText: {
     color: '#1294D5',
-    fontSize: 14,
+    fontSize: 13,
   },
   emptyText: {
     textAlign: 'center',
