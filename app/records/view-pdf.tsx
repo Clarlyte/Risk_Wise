@@ -55,18 +55,15 @@ function PDFViewer({ uri }: PDFViewerProps) {
           !webViewLoaded && styles.hidden
         ]}
         onLoadStart={() => {
-          console.log('WebView started loading');
           setWebViewLoaded(false);
           setIsLoading(true);
         }}
         onLoadEnd={() => {
-          console.log('WebView finished loading');
           setWebViewLoaded(true);
           setIsLoading(false);
         }}
         onError={(syntheticEvent) => {
           const { nativeEvent } = syntheticEvent;
-          console.warn('WebView error:', nativeEvent);
           setError(`Error loading content: ${nativeEvent.description}`);
           setIsLoading(false);
         }}
@@ -74,6 +71,9 @@ function PDFViewer({ uri }: PDFViewerProps) {
         javaScriptEnabled={true}
         domStorageEnabled={true}
         scalesPageToFit={true}
+        scrollEnabled={true}
+        containerStyle={{ backgroundColor: 'white' }}
+        androidLayerType="hardware"
       />
       {isLoading && !webViewLoaded && (
         <View style={styles.loadingOverlay}>
@@ -197,7 +197,7 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    backgroundColor: '#F2F1F9',
+    backgroundColor: 'white',
     position: 'relative',
   },
   contentContainer: {
@@ -206,12 +206,11 @@ const styles = StyleSheet.create({
   },
   pdfContainer: {
     flex: 1,
-    backgroundColor: '#F2F1F9',
-    position: 'relative',
+    backgroundColor: 'white',
   },
   pdf: {
     flex: 1,
-    backgroundColor: '#F2F1F9',
+    backgroundColor: 'white',
   },
   bottomNavigationContainer: {
     position: 'absolute',
@@ -228,7 +227,7 @@ const styles = StyleSheet.create({
   },
   loadingOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: '#F2F1F9',
+    backgroundColor: 'white',
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 1000,

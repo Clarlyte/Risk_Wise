@@ -124,15 +124,23 @@ export default function FolderScreen() {
 
   const handleDownloadExcel = async (assessment: Assessment) => {
     try {
-      await generateExcelFile(assessment);
-      // No need for Alert here since the share dialog will handle the user interaction
+      const filePath = await generateExcelFile(assessment);
+      Alert.alert(
+        'Success',
+        'Excel file generated successfully',
+        [
+          {
+            text: 'OK',
+            onPress: () => {
+              // You could add additional handling here if needed
+              console.log('Excel file saved at:', filePath);
+            }
+          }
+        ]
+      );
     } catch (error) {
       console.error('Error downloading excel:', error);
-      Alert.alert('Error', 
-        error instanceof Error 
-          ? error.message 
-          : 'Failed to generate Excel file'
-      );
+      Alert.alert('Error', 'Failed to generate Excel file');
     }
   };
 

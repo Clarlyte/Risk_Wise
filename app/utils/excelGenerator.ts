@@ -34,7 +34,14 @@ function generateExcelContent(assessment: Assessment): string {
 
 export async function generateExcelFile(assessment: Assessment): Promise<void> {
   try {
-    const csvContent = generateExcelContent(assessment);
+    // Limit the number of hazards to prevent memory issues
+    const MAX_HAZARDS = 100;
+    const limitedHazards = assessment.hazards.slice(0, MAX_HAZARDS);
+    
+    const csvContent = generateExcelContent({
+      ...assessment,
+      hazards: limitedHazards
+    });
     
     // Create directory if it doesn't exist
     const dirPath = `${FileSystem.documentDirectory}excel/`;

@@ -9,154 +9,136 @@ export async function generatePDFContent(assessment: Assessment): Promise<string
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no" />
         <style>
-          body { font-family: Arial, sans-serif; padding: 20px; }
-          .header { text-align: center; margin-bottom: 30px; }
-          .section { margin-bottom: 20px; }
-          .hazard { 
-            background-color: #f5f5f5; 
-            padding: 15px; 
-            margin-bottom: 15px;
-            border-radius: 8px;
+          body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            padding: 16px;
+            line-height: 1.4;
+            color: #000;
+            margin: 0;
+            font-size: 12px;
           }
-          .risk-score {
+          .header {
+            border-bottom: 1px solid #000;
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+          }
+          .title {
+            font-size: 18px;
             font-weight: bold;
-            padding: 5px;
-            border-radius: 4px;
-            display: inline-block;
-            margin: 10px 0;
+            margin-bottom: 4px;
           }
-          .controls-section {
-            margin: 15px 0;
-            padding: 10px;
-            background-color: #fff;
-            border-radius: 4px;
+          .meta {
+            display: flex;
+            gap: 16px;
+            font-size: 12px;
           }
-          .control-type {
-            margin: 10px 0;
-            padding-left: 10px;
+          .hazard {
+            border: 1px solid #ddd;
+            padding: 12px;
+            margin-bottom: 12px;
           }
-          .recommendations {
-            margin-top: 15px;
-            padding: 10px;
-            background-color: #e3f2fd;
-            border-radius: 4px;
+          .hazard-name {
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 8px;
+            padding-bottom: 4px;
+            border-bottom: 1px solid #eee;
+          }
+          .section {
+            margin-bottom: 8px;
+          }
+          .section-heading {
+            font-weight: bold;
+            font-size: 13px;
+            margin-bottom: 4px;
+          }
+          .risk-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 8px;
+          }
+          .risk-box {
+            background: #f5f5f5;
+            padding: 6px;
+            font-size: 11px;
+          }
+          .controls div {
+            margin: 2px 0;
+          }
+          .implementation {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            font-size: 11px;
+          }
+          .high-alert {
+            color: #d32f2f;
+            font-weight: bold;
+            margin-top: 8px;
+            font-size: 11px;
           }
         </style>
       </head>
       <body>
         <div class="header">
-          <h1>${assessment.name}</h1>
-          <p>Generated on: ${new Date(assessment.date).toLocaleDateString()}</p>
+          <div class="title">${assessment.name}</div>
+          <div class="meta">
+            <div><strong>Activity:</strong> ${assessment.activity.replace('Hazards Assessment', '').trim()}</div>
+            <div><strong>Date:</strong> ${new Date(assessment.date).toLocaleDateString()}</div>
+          </div>
         </div>
 
-        <div class="section">
-          <h2>Activity: ${assessment.activity}</h2>
-        </div>
-
-        <div class="section">
-          <h2>Hazards Assessment</h2>
-          ${assessment.hazards.map((hazard, index) => {
-            const initialRiskLevel = getRiskLevel(hazard.riskScore);
-            const finalRiskLevel = getRiskLevel(hazard.finalRiskScore);
-            
-            return `
-              <div class="hazard">
-                <h3>Hazard ${index + 1}: ${hazard.description}</h3>
-                
-                <h4>Effects:</h4>
-                <ul>
-                  ${hazard.effects.map((effect: any) => `
-                    <li>${effect.description}</li>
-                  `).join('')}
-                </ul>
-
-                <h4>Existing Controls:</h4>
-                <ul>
-                  ${hazard.existingControls.map((control: any) => `
-                    <li>${control.description}</li>
-                  `).join('')}
-                </ul>
-
-                <h4>Initial Risk Assessment:</h4>
-                <div>
-                  <p>Likelihood: ${hazard.likelihood}</p>
-                  <p>Severity: ${hazard.severity}</p>
-                  <div class="risk-score" style="background-color: ${initialRiskLevel.color}20; color: ${initialRiskLevel.color}">
-                    Initial Risk Score: ${hazard.riskScore} - ${initialRiskLevel.description}
+        ${assessment.hazards.map((hazard, index) => {
+          const initialRiskLevel = getRiskLevel(hazard.riskScore);
+          const finalRiskLevel = getRiskLevel(hazard.finalRiskScore);
+          
+          return `
+            <div class="hazard">
+              <div class="hazard-name">${index + 1}. ${hazard.description}</div>
+              
+              <div class="section">
+                <div class="section-heading">Risk Assessment</div>
+                <div class="risk-grid">
+                  <div class="risk-box">
+                    <strong>Initial:</strong> ${hazard.riskScore} (${initialRiskLevel.description})
+                    L:${hazard.likelihood}, S:${hazard.severity}
                   </div>
-                </div>
-
-                <div class="controls-section">
-                  <h4>Additional Controls:</h4>
-                  
-                  ${hazard.additionalControls.ac.length > 0 ? `
-                    <div class="control-type">
-                      <h5>Administrative Controls:</h5>
-                      <ul>
-                        ${hazard.additionalControls.ac.map((control: string) => `
-                          <li>${control}</li>
-                        `).join('')}
-                      </ul>
-                    </div>
-                  ` : ''}
-                  
-                  ${hazard.additionalControls.ec.length > 0 ? `
-                    <div class="control-type">
-                      <h5>Engineering Controls:</h5>
-                      <ul>
-                        ${hazard.additionalControls.ec.map((control: string) => `
-                          <li>${control}</li>
-                        `).join('')}
-                      </ul>
-                    </div>
-                  ` : ''}
-                  
-                  ${hazard.additionalControls.ppe.length > 0 ? `
-                    <div class="control-type">
-                      <h5>PPE Required:</h5>
-                      <ul>
-                        ${hazard.additionalControls.ppe.map((control: string) => `
-                          <li>${control}</li>
-                        `).join('')}
-                      </ul>
-                    </div>
-                  ` : ''}
-
-                  <div class="control-type">
-                    <h5>Implementation:</h5>
-                    <p>Point Person: ${hazard.pointPerson}</p>
-                    <p>Due Date: ${hazard.dueDate}</p>
+                  <div class="risk-box">
+                    <strong>Final:</strong> ${hazard.finalRiskScore} (${finalRiskLevel.description})
+                    L:${hazard.finalLikelihood}, S:${hazard.finalSeverity}
                   </div>
-                </div>
-
-                <h4>Final Risk Assessment:</h4>
-                <div>
-                  <p>Likelihood: ${hazard.finalLikelihood}</p>
-                  <p>Severity: ${hazard.finalSeverity}</p>
-                  <div class="risk-score" style="background-color: ${finalRiskLevel.color}20; color: ${finalRiskLevel.color}">
-                    Final Risk Score: ${hazard.finalRiskScore} - ${finalRiskLevel.description}
-                  </div>
-                </div>
-
-                <div class="recommendations">
-                  <h4>Recommendations:</h4>
-                  <p>${
-                    hazard.finalRiskScore > hazard.riskScore 
-                      ? 'Warning: Risk level has increased. Additional controls may be needed.'
-                      : hazard.finalRiskScore === hazard.riskScore
-                      ? 'Controls have not reduced risk level. Consider implementing additional controls.'
-                      : `Risk level has been reduced from ${initialRiskLevel.description} to ${finalRiskLevel.description}. Continue monitoring and maintaining controls.`
-                  }</p>
-                  ${
-                    hazard.finalRiskScore > 12 
-                      ? '<p><strong>High Risk Alert:</strong> Immediate action required. Consider stopping activity until additional controls are implemented.</p>'
-                      : ''
-                  }
                 </div>
               </div>
-            `;
-          }).join('')}
-        </div>
+
+              <div class="section">
+                <div class="section-heading">Controls</div>
+                <div class="controls">
+                  ${hazard.additionalControls.ac.length > 0 ? `
+                    <div><strong>Admin:</strong> ${hazard.additionalControls.ac.join(', ')}</div>
+                  ` : ''}
+                  ${hazard.additionalControls.ec.length > 0 ? `
+                    <div><strong>Eng:</strong> ${hazard.additionalControls.ec.join(', ')}</div>
+                  ` : ''}
+                  ${hazard.additionalControls.ppe.length > 0 ? `
+                    <div><strong>PPE:</strong> ${hazard.additionalControls.ppe.join(', ')}</div>
+                  ` : ''}
+                </div>
+              </div>
+
+              <div class="section">
+                <div class="implementation">
+                  <div><strong>Owner:</strong> ${hazard.pointPerson}</div>
+                  <div><strong>Due:</strong> ${hazard.dueDate}</div>
+                </div>
+              </div>
+
+              ${hazard.finalRiskScore > 12 ? `
+                <div class="high-alert">⚠️ High Risk - Immediate action required</div>
+              ` : ''}
+            </div>
+          `;
+        }).join('')}
       </body>
     </html>
   `;
