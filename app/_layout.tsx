@@ -5,6 +5,7 @@ import { TabNavigationState, ParamListBase } from '@react-navigation/native';
 import { FontAwesome5 } from '@expo/vector-icons';
 import { FolderProvider } from './contexts/FolderContext';
 import { AssessmentProvider } from './contexts/AssessmentContext';
+import { StorageProvider } from './contexts/storage-context';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -83,20 +84,22 @@ const CustomTabBar: React.FC<CustomTabBarProps> = ({ state, descriptors, navigat
 
 export default function RootLayout() {
   return (
-    <AssessmentProvider>
-      <FolderProvider>
-        <Tabs
-          screenOptions={{
-            headerShown: false,
-          }}
-          tabBar={(props) => <CustomTabBar {...props} />}
-        >
-          <Tabs.Screen name="index" />
-          <Tabs.Screen name="add" />
-          <Tabs.Screen name="records" />
-        </Tabs>
-      </FolderProvider>
-    </AssessmentProvider>
+    <StorageProvider>
+      <AssessmentProvider>
+        <FolderProvider>
+          <Tabs
+            screenOptions={{
+              headerShown: false,
+            }}
+            tabBar={(props) => <CustomTabBar {...props} />}
+          >
+            <Tabs.Screen name="index" />
+            <Tabs.Screen name="add" />
+            <Tabs.Screen name="records" />
+          </Tabs>
+        </FolderProvider>
+      </AssessmentProvider>
+    </StorageProvider>
   );
 }
 

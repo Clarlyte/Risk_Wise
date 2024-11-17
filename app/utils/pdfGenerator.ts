@@ -7,6 +7,7 @@ export async function generatePDFContent(assessment: Assessment): Promise<string
     <!DOCTYPE html>
     <html>
       <head>
+        <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no" />
         <style>
           body { 
@@ -144,8 +145,8 @@ export async function generatePDFContent(assessment: Assessment): Promise<string
   `;
 
   try {
-    const directory = `${FileSystem.documentDirectory}ExponentExperienceData/@clarlyte/RiskWise/`;
-    const fileName = `${assessment.name}_assessment.html`;
+    const directory = `${FileSystem.documentDirectory}assessments/`;
+    const fileName = `${assessment.id}_${Date.now()}.html`;
     const filePath = `${directory}${fileName}`;
 
     const dirInfo = await FileSystem.getInfoAsync(directory);
@@ -153,11 +154,22 @@ export async function generatePDFContent(assessment: Assessment): Promise<string
       await FileSystem.makeDirectoryAsync(directory, { intermediates: true });
     }
 
+    const fileInfo = await FileSystem.getInfoAsync(filePath);
+    if (fileInfo.exists) {
+      await FileSystem.deleteAsync(filePath);
+    }
+
     await FileSystem.writeAsStringAsync(filePath, htmlContent, {
       encoding: FileSystem.EncodingType.UTF8,
     });
 
     console.log('HTML saved at:', filePath);
+    
+    const newFileInfo = await FileSystem.getInfoAsync(filePath);
+    if (!newFileInfo.exists || newFileInfo.size === 0) {
+      throw new Error('File not written correctly');
+    }
+
     return filePath;
   } catch (error) {
     console.error('Error generating HTML:', error);

@@ -29,3 +29,14 @@ This mobile application, built with React Native and Expo, is designed for condu
    - Stores completed PDF assessments locally with folders and files accessible for viewing, sharing, and organization.
 
 The app features a **light theme** for a user-friendly experience. Further customization and modular component designs are in place to accommodate additional functionalities in future updates.
+
+## Environment Setup
+
+1. Copy `.env.example` to `.env`:   ```bash
+   cp .env.example .env   ```
+
+2. Fill in your Supabase credentials in `.env`:   ```
+   EXPO_PUBLIC_SUPABASE_URL=your_supabase_url
+   EXPO_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key   ```
+
+3. Never commit the `.env` file to version control
