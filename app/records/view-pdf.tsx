@@ -24,16 +24,39 @@ function PDFViewer({ uri }: PDFViewerProps) {
     console.log('Attempting to load HTML from:', uri);
     async function loadHTML() {
       try {
+        const fileInfo = await FileSystem.getInfoAsync(uri);
+        if (!fileInfo.exists) {
+          throw new Error('File does not exist');
+        }
+
         const content = await FileSystem.readAsStringAsync(uri);
+        if (!content || content.length === 0) {
+          throw new Error('File is empty');
+        }
+
         setHtmlContent(content);
         console.log('HTML content loaded, length:', content.length);
       } catch (err) {
         console.error('Error loading HTML:', err);
-        setError('Error loading file content');
+        setError(err instanceof Error ? err.message : 'Error loading file content');
+        setIsLoading(false);
       }
     }
     loadHTML();
   }, [uri]);
+
+  useEffect(() => {
+    if (isLoading) {
+      const timeout = setTimeout(() => {
+        if (isLoading) {
+          setError('Loading timed out. Please try again.');
+          setIsLoading(false);
+        }
+      }, 10000);
+
+      return () => clearTimeout(timeout);
+    }
+  }, [isLoading]);
 
   if (error) {
     return (
@@ -48,7 +71,7 @@ function PDFViewer({ uri }: PDFViewerProps) {
       <WebView
         source={{ 
           html: htmlContent,
-          baseUrl: ''
+          baseUrl: 'file:///'
         }}
         style={[
           styles.pdf,
@@ -64,6 +87,7 @@ function PDFViewer({ uri }: PDFViewerProps) {
         }}
         onError={(syntheticEvent) => {
           const { nativeEvent } = syntheticEvent;
+          console.error('WebView error:', nativeEvent);
           setError(`Error loading content: ${nativeEvent.description}`);
           setIsLoading(false);
         }}
@@ -73,7 +97,10 @@ function PDFViewer({ uri }: PDFViewerProps) {
         scalesPageToFit={true}
         scrollEnabled={true}
         containerStyle={{ backgroundColor: 'white' }}
-        androidLayerType="hardware"
+        androidLayerType="software"
+        mixedContentMode="always"
+        allowFileAccess={true}
+        allowUniversalAccessFromFileURLs={true}
       />
       {isLoading && !webViewLoaded && (
         <View style={styles.loadingOverlay}>
