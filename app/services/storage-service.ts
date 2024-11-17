@@ -4,6 +4,7 @@ import { createClient } from '@supabase/supabase-js';
 import NetInfo from '@react-native-community/netinfo';
 import { z } from 'zod';
 import * as Crypto from 'expo-crypto';
+import { encode as base64Encode, decode as base64Decode } from 'base-64';
 import { EXPO_PUBLIC_SUPABASE_URL, EXPO_PUBLIC_SUPABASE_ANON_KEY } from '@env';
 
 // Define assessment schema using Zod
@@ -51,10 +52,19 @@ export class HybridStorageService implements StorageService {
   }
 
   private async generateAndStoreNewKey(): Promise<string> {
-    const key = await Crypto.getRandomBytesAsync(32);
-    const keyString = Buffer.from(key).toString('base64');
+    const randomBytes = await Crypto.getRandomBytesAsync(32);
+    const keyString = this.arrayBufferToBase64(randomBytes);
     await SecureStore.setItemAsync('encryptionKey', keyString);
     return keyString;
+  }
+
+  private arrayBufferToBase64(buffer: ArrayBuffer): string {
+    const bytes = new Uint8Array(buffer);
+    let binary = '';
+    for (let i = 0; i < bytes.byteLength; i++) {
+      binary += String.fromCharCode(bytes[i]);
+    }
+    return base64Encode(binary);
   }
 
   private async generateSharingToken(assessment: Assessment): Promise<string> {
@@ -63,15 +73,13 @@ export class HybridStorageService implements StorageService {
       Crypto.CryptoDigestAlgorithm.SHA256,
       tokenData
     );
-    return tokenBytes;
+    return this.arrayBufferToBase64(new TextEncoder().encode(tokenBytes));
   }
 
   private async encryptAssessment(assessment: Assessment): Promise<string> {
     try {
-      // This is a simplified example. In production, use a proper encryption library
       const assessmentString = JSON.stringify(assessment);
-      const encodedData = Buffer.from(assessmentString).toString('base64');
-      return encodedData;
+      return base64Encode(assessmentString);
     } catch (error) {
       console.error('Error encrypting assessment:', error);
       throw error;
