@@ -1,5 +1,4 @@
 import * as FileSystem from 'expo-file-system';
-import * as Sharing from 'expo-sharing';
 import { Assessment } from '../types/pdf';
 import { HazardWithFinalRisk } from '../types/hazard';
 
@@ -32,47 +31,41 @@ function generateExcelContent(assessment: Assessment): string {
   return csvContent;
 }
 
-export async function generateExcelFile(assessment: Assessment): Promise<void> {
+export async function generateExcelFile(assessment: Assessment): Promise<string> {
   try {
-    // Limit the number of hazards to prevent memory issues
-    const MAX_HAZARDS = 100;
-    const limitedHazards = assessment.hazards.slice(0, MAX_HAZARDS);
+    console.log('Generating Excel file...');
+    const csvContent = generateExcelContent(assessment);
     
-    const csvContent = generateExcelContent({
-      ...assessment,
-      hazards: limitedHazards
-    });
-    
-    // Create directory if it doesn't exist
-    const dirPath = `${FileSystem.documentDirectory}excel/`;
+    // Use the downloads directory for Android
+    const dirPath = `${FileSystem.documentDirectory}Download/`;
+    console.log('Directory path:', dirPath);
+
     const dirInfo = await FileSystem.getInfoAsync(dirPath);
     if (!dirInfo.exists) {
       await FileSystem.makeDirectoryAsync(dirPath, { intermediates: true });
     }
 
-    // Generate file path with a more user-friendly name
+    // Generate file path with timestamp to ensure uniqueness
     const sanitizedName = assessment.name.replace(/[^a-zA-Z0-9]/g, '_');
-    const fileName = `${sanitizedName}.csv`;
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const fileName = `RiskWise_${sanitizedName}_${timestamp}.csv`;
     const filePath = `${dirPath}${fileName}`;
+    console.log('File path:', filePath);
 
     // Write file
     await FileSystem.writeAsStringAsync(filePath, csvContent, {
       encoding: FileSystem.EncodingType.UTF8
     });
 
-    // Check if sharing is available
-    const isSharingAvailable = await Sharing.isAvailableAsync();
-    if (!isSharingAvailable) {
-      throw new Error('Sharing is not available on this device');
+    // Verify file was created
+    const fileInfo = await FileSystem.getInfoAsync(filePath);
+    console.log('File info:', fileInfo);
+
+    if (!fileInfo.exists) {
+      throw new Error('File was not created successfully');
     }
 
-    // Share the file
-    await Sharing.shareAsync(filePath, {
-      mimeType: 'text/csv',
-      dialogTitle: 'Download Assessment Excel File',
-      UTI: 'public.comma-separated-values-text' // for iOS
-    });
-
+    return filePath;
   } catch (error) {
     console.error('Error generating Excel file:', error);
     throw error;

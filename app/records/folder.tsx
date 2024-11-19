@@ -9,6 +9,10 @@ import { SearchBar } from '../components/SearchBar';
 import { Assessment } from '../types/pdf';
 import * as FileSystem from 'expo-file-system';
 import { generateExcelFile } from '../utils/excelGenerator';
+import { useStorage } from '../contexts/storage-context';
+import { Share } from 'react-native';
+import * as MediaLibrary from 'expo-media-library';
+import { StorageAccessFramework } from 'expo-file-system';
 
 export default function FolderScreen() {
   const router = useRouter();
@@ -16,6 +20,8 @@ export default function FolderScreen() {
   const [assessments, setAssessments] = useState<Assessment[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+  const storage = useStorage();
+  const [sharingId, setSharingId] = useState<string | null>(null);
 
   const loadAssessments = useCallback(async () => {
     if (!folderId) return;
@@ -27,7 +33,19 @@ export default function FolderScreen() {
       if (storedAssessments) {
         const allAssessments: Assessment[] = JSON.parse(storedAssessments);
         
-        // Ensure we're comparing strings and they're exactly equal
+        // Add validation
+        if (!Array.isArray(allAssessments)) {
+          console.error('Invalid assessments data');
+          setAssessments([]);
+          return;
+        }
+
+        // Limit the number of assessments if needed
+        if (allAssessments.length > 1000) {
+          console.warn('Too many assessments, truncating...');
+          await AsyncStorage.setItem('assessments', JSON.stringify(allAssessments.slice(-1000)));
+        }
+        
         const currentFolderId = String(folderId).trim();
         const folderAssessments = allAssessments.filter(assessment => 
           String(assessment.folderId).trim() === currentFolderId
@@ -57,38 +75,6 @@ export default function FolderScreen() {
   const filteredAssessments = assessments.filter(assessment =>
     assessment.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     assessment.activity.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
-  const renderAssessmentItem = ({ item }: { item: Assessment }) => (
-    <View style={styles.assessmentItem}>
-      <View style={styles.assessmentHeader}>
-        <Text style={styles.assessmentName}>{item.name}</Text>
-        <Text style={styles.assessmentDate}>
-          {new Date(item.date).toLocaleDateString()}
-        </Text>
-      </View>
-      <Text style={styles.assessmentActivity}>Activity: {item.activity}</Text>
-      <View style={styles.assessmentActions}>
-        <TouchableOpacity 
-          style={styles.actionButton}
-          onPress={() => handleViewPDF(item)}
-        >
-          <FontAwesome5 name="file-pdf" size={20} color="#1294D5" />
-          <Text style={styles.actionButtonText}>View PDF</Text>
-        </TouchableOpacity>
-        <TouchableOpacity 
-          style={styles.actionButton}
-          onPress={() => handleDownloadExcel(item)}
-        >
-          <FontAwesome5 name="file-excel" size={20} color="#1294D5" />
-          <Text style={styles.actionButtonText}>Download</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.actionButton}>
-          <FontAwesome5 name="share-alt" size={20} color="#1294D5" />
-          <Text style={styles.actionButtonText}>Share</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
   );
 
   const handleBack = () => {
@@ -124,25 +110,142 @@ export default function FolderScreen() {
 
   const handleDownloadExcel = async (assessment: Assessment) => {
     try {
+      // Show loading indicator
+      Alert.alert('Downloading...', 'Please wait while we generate your file');
+
+      console.log('Starting Excel file generation...');
       const filePath = await generateExcelFile(assessment);
-      Alert.alert(
-        'Success',
-        'Excel file generated successfully',
-        [
-          {
-            text: 'OK',
-            onPress: () => {
-              // You could add additional handling here if needed
-              console.log('Excel file saved at:', filePath);
-            }
-          }
-        ]
-      );
+      console.log('Excel file generated at:', filePath);
+
+      try {
+        // Get file content
+        const fileContent = await FileSystem.readAsStringAsync(filePath);
+        
+        // Get permission and save file using SAF
+        const permissions = await StorageAccessFramework.requestDirectoryPermissionsAsync();
+        
+        if (permissions.granted) {
+          // Generate file name
+          const fileName = `RiskWise_${assessment.name.replace(/[^a-zA-Z0-9]/g, '_')}_${Date.now()}.csv`;
+          
+          // Save file
+          const uri = await StorageAccessFramework.createFileAsync(
+            permissions.directoryUri,
+            fileName,
+            'text/csv'
+          );
+          
+          await FileSystem.writeAsStringAsync(uri, fileContent, {
+            encoding: FileSystem.EncodingType.UTF8,
+          });
+
+          Alert.alert(
+            'Success',
+            'Excel file downloaded successfully. You can find it in your selected folder.',
+            [{ text: 'OK' }]
+          );
+        } else {
+          throw new Error('Storage permission not granted');
+        }
+      } catch (error) {
+        console.error('Error saving file:', error);
+        // Fallback to sharing if saving fails
+        await Share.share({
+          url: filePath,
+          title: `${assessment.name} - Excel Export`,
+        });
+      } finally {
+        // Clean up temp file
+        await FileSystem.deleteAsync(filePath, { idempotent: true }).catch(() => {});
+      }
+
     } catch (error) {
       console.error('Error downloading excel:', error);
-      Alert.alert('Error', 'Failed to generate Excel file');
+      Alert.alert('Error', 'Failed to download Excel file');
     }
   };
+
+  const handleShare = async (assessment: Assessment) => {
+    console.log('Sharing assessment:', assessment.id);
+    setSharingId(assessment.id);
+    
+    try {
+      const { shareId, encryptionKey } = await storage.createShareableAssessment(
+        assessment,
+        7 // 7 days expiry
+      );
+
+      // Create sharing message with links
+      const shareMessage = 
+        `RiskWise Assessment: ${assessment.name}\n\n` +
+        `View Assessment:\n` +
+        `https://riskwise.app/shared/${shareId}/view\n\n` +
+        `Download Assessment:\n` +
+        `https://riskwise.app/shared/${shareId}/download\n\n` +
+        `Encryption Key: ${encryptionKey}\n\n` +
+        `Note: These links will expire in 7 days.`;
+
+      // Show share dialog
+      const result = await Share.share({
+        message: shareMessage,
+        title: `${assessment.name} Assessment`,
+      });
+
+      if (result.action === Share.sharedAction) {
+        console.log('Successfully shared assessment');
+      }
+    } catch (error) {
+      console.error('Error sharing assessment:', error);
+      Alert.alert(
+        'Error',
+        error instanceof Error ? error.message : 'Failed to share assessment'
+      );
+    } finally {
+      setSharingId(null);
+    }
+  };
+
+  const renderAssessmentItem = ({ item }: { item: Assessment }) => (
+    <View style={styles.assessmentItem}>
+      <View style={styles.assessmentHeader}>
+        <Text style={styles.assessmentName}>{item.name}</Text>
+        <Text style={styles.assessmentDate}>
+          {new Date(item.date).toLocaleDateString()}
+        </Text>
+      </View>
+      <Text style={styles.assessmentActivity}>Activity: {item.activity}</Text>
+      <View style={styles.assessmentActions}>
+        <TouchableOpacity 
+          style={styles.actionButton}
+          onPress={() => handleViewPDF(item)}
+        >
+          <FontAwesome5 name="file-pdf" size={20} color="#1294D5" />
+          <Text style={styles.actionButtonText}>View PDF</Text>
+        </TouchableOpacity>
+        <TouchableOpacity 
+          style={styles.actionButton}
+          onPress={() => handleDownloadExcel(item)}
+        >
+          <FontAwesome5 name="file-excel" size={20} color="#1294D5" />
+          <Text style={styles.actionButtonText}>Download</Text>
+        </TouchableOpacity>
+        <TouchableOpacity 
+          style={[styles.actionButton, sharingId === item.id && styles.actionButtonDisabled]}
+          onPress={() => handleShare(item)}
+          disabled={sharingId === item.id}
+        >
+          {sharingId === item.id ? (
+            <ActivityIndicator size="small" color="#1294D5" />
+          ) : (
+            <>
+              <FontAwesome5 name="share-alt" size={20} color="#1294D5" />
+              <Text style={styles.actionButtonText}>Share</Text>
+            </>
+          )}
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -243,5 +346,8 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  actionButtonDisabled: {
+    opacity: 0.5,
   },
 }); 

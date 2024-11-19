@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ActivityIndicator, Text } from 'react-native';
+import { View, StyleSheet, ActivityIndicator, Text, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Stack, useRouter, useLocalSearchParams } from 'expo-router';
 import { WebView } from 'react-native-webview';
-import { Share } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as FileSystem from 'expo-file-system';
 import { Header } from '../components/Header';
 import { BottomNavigation } from '../components/BottomNavigation';
 import { FontAwesome5 } from '@expo/vector-icons';
+import { useStorage } from '../contexts/storage-context';
+import * as Crypto from 'expo-crypto';
+import { createClient } from '@supabase/supabase-js';
 
 interface PDFViewerProps {
   uri: string;
@@ -19,12 +21,18 @@ function PDFViewer({ uri }: PDFViewerProps) {
   const [error, setError] = useState<string | null>(null);
   const [htmlContent, setHtmlContent] = useState<string>('');
   const [webViewLoaded, setWebViewLoaded] = useState(false);
+  const [loadAttempts, setLoadAttempts] = useState(0);
+  const MAX_ATTEMPTS = 3;
 
   useEffect(() => {
-    console.log('Attempting to load HTML from:', uri);
+    let isMounted = true;
+    console.log('Loading HTML attempt:', loadAttempts + 1);
+
     async function loadHTML() {
       try {
         const fileInfo = await FileSystem.getInfoAsync(uri);
+        console.log('File info:', fileInfo);
+        
         if (!fileInfo.exists) {
           throw new Error('File does not exist');
         }
@@ -34,77 +42,89 @@ function PDFViewer({ uri }: PDFViewerProps) {
           throw new Error('File is empty');
         }
 
-        setHtmlContent(content);
-        console.log('HTML content loaded, length:', content.length);
-      } catch (err) {
-        console.error('Error loading HTML:', err);
-        setError(err instanceof Error ? err.message : 'Error loading file content');
-        setIsLoading(false);
-      }
-    }
-    loadHTML();
-  }, [uri]);
-
-  useEffect(() => {
-    if (isLoading) {
-      const timeout = setTimeout(() => {
-        if (isLoading) {
-          setError('Loading timed out. Please try again.');
+        console.log('Content loaded, length:', content.length);
+        if (isMounted) {
+          setHtmlContent(content);
           setIsLoading(false);
         }
-      }, 10000);
-
-      return () => clearTimeout(timeout);
+      } catch (err) {
+        console.error('Error loading HTML:', err);
+        if (isMounted) {
+          if (loadAttempts < MAX_ATTEMPTS - 1) {
+            setLoadAttempts(prev => prev + 1);
+          } else {
+            setError(err instanceof Error ? err.message : 'Error loading file content');
+            setIsLoading(false);
+          }
+        }
+      }
     }
-  }, [isLoading]);
+
+    if (isLoading) {
+      loadHTML();
+    }
+
+    return () => {
+      isMounted = false;
+    };
+  }, [uri, loadAttempts]);
 
   if (error) {
     return (
       <View style={styles.errorContainer}>
         <Text style={styles.errorText}>{error}</Text>
+        <TouchableOpacity 
+          style={styles.retryButton}
+          onPress={() => {
+            setError(null);
+            setIsLoading(true);
+            setLoadAttempts(0);
+          }}
+        >
+          <Text style={styles.retryButtonText}>Retry</Text>
+        </TouchableOpacity>
       </View>
     );
   }
 
   return (
     <View style={styles.pdfContainer}>
-      <WebView
-        source={{ 
-          html: htmlContent,
-          baseUrl: 'file:///'
-        }}
-        style={[
-          styles.pdf,
-          !webViewLoaded && styles.hidden
-        ]}
-        onLoadStart={() => {
-          setWebViewLoaded(false);
-          setIsLoading(true);
-        }}
-        onLoadEnd={() => {
-          setWebViewLoaded(true);
-          setIsLoading(false);
-        }}
-        onError={(syntheticEvent) => {
-          const { nativeEvent } = syntheticEvent;
-          console.error('WebView error:', nativeEvent);
-          setError(`Error loading content: ${nativeEvent.description}`);
-          setIsLoading(false);
-        }}
-        originWhitelist={['*']}
-        javaScriptEnabled={true}
-        domStorageEnabled={true}
-        scalesPageToFit={true}
-        scrollEnabled={true}
-        containerStyle={{ backgroundColor: 'white' }}
-        androidLayerType="software"
-        mixedContentMode="always"
-        allowFileAccess={true}
-        allowUniversalAccessFromFileURLs={true}
-      />
-      {isLoading && !webViewLoaded && (
+      {htmlContent ? (
+        <WebView
+          source={{ 
+            html: htmlContent,
+            baseUrl: 'file:///'
+          }}
+          style={styles.pdf}
+          onLoadStart={() => {
+            console.log('WebView load starting');
+            setWebViewLoaded(false);
+          }}
+          onLoadEnd={() => {
+            console.log('WebView load complete');
+            setWebViewLoaded(true);
+          }}
+          onError={(syntheticEvent) => {
+            const { nativeEvent } = syntheticEvent;
+            console.error('WebView error:', nativeEvent);
+            setError(`Error loading content: ${nativeEvent.description}`);
+          }}
+          originWhitelist={['*']}
+          javaScriptEnabled={true}
+          domStorageEnabled={true}
+          scalesPageToFit={true}
+          scrollEnabled={true}
+          containerStyle={{ backgroundColor: 'white' }}
+          androidLayerType="hardware"
+          mixedContentMode="always"
+          allowFileAccess={true}
+          allowUniversalAccessFromFileURLs={true}
+        />
+      ) : null}
+      {(!webViewLoaded || isLoading) && (
         <View style={styles.loadingOverlay}>
           <ActivityIndicator size="large" color="#FC7524" />
+          <Text style={styles.loadingText}>Loading PDF...</Text>
         </View>
       )}
     </View>
@@ -113,6 +133,7 @@ function PDFViewer({ uri }: PDFViewerProps) {
 
 export default function ViewPDFScreen() {
   const router = useRouter();
+  const storage = useStorage();
   const { assessmentId, assessmentName } = useLocalSearchParams();
   const [pdfUrl, setPdfUrl] = useState<string>('');
   const [isLoading, setIsLoading] = useState(true);
@@ -120,6 +141,13 @@ export default function ViewPDFScreen() {
   useEffect(() => {
     loadAssessment();
   }, [assessmentId]);
+
+  useEffect(() => {
+    console.log('Storage service state:', {
+      isInitialized: storage !== null,
+      storage
+    });
+  }, [storage]);
 
   const loadAssessment = async () => {
     try {
@@ -145,21 +173,7 @@ export default function ViewPDFScreen() {
     router.back();
   };
 
-  const handleShare = async () => {
-    if (pdfUrl) {
-      try {
-        await Share.share({
-          url: pdfUrl,
-          title: `${assessmentName} Assessment`,
-        });
-      } catch (error) {
-        console.error('Error sharing PDF:', error);
-      }
-    }
-  };
-
   const handleDownload = async () => {
-    // Implement download functionality if needed
     console.log('Download functionality to be implemented');
   };
 
@@ -182,21 +196,12 @@ export default function ViewPDFScreen() {
           title={assessmentName as string}
           onBackPress={handleBack}
           rightIcon={
-            <View style={styles.headerActions}>
-              <FontAwesome5 
-                name="download" 
-                size={20} 
-                color="white" 
-                style={styles.headerIcon}
-                onPress={handleDownload}
-              />
-              <FontAwesome5 
-                name="share-alt" 
-                size={20} 
-                color="white" 
-                onPress={handleShare}
-              />
-            </View>
+            <FontAwesome5 
+              name="download" 
+              size={20} 
+              color="white" 
+              onPress={handleDownload}
+            />
           }
         />
 
@@ -207,9 +212,6 @@ export default function ViewPDFScreen() {
         <View style={styles.bottomNavigationContainer}>
           <BottomNavigation
             onBack={handleBack}
-            onNext={handleShare}
-            nextLabel="Share PDF"
-            nextIcon="share-alt"
           />
         </View>
       </View>
@@ -274,10 +276,27 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   errorText: {
-    color: 'red',
+    color: '#FF3B30',
     textAlign: 'center',
+    marginBottom: 12,
   },
   hidden: {
     opacity: 0,
+  },
+  retryButton: {
+    marginTop: 16,
+    padding: 12,
+    backgroundColor: '#FC7524',
+    borderRadius: 8,
+  },
+  retryButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  loadingText: {
+    marginTop: 12,
+    color: '#666',
+    fontSize: 14,
   },
 }); 
