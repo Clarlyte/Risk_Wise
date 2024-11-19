@@ -14,6 +14,7 @@ import { generatePDFContent } from '../utils/pdfGenerator';
 import { inputStyles } from '../styles/input-styles';
 import { Assessment } from '../types/pdf';
 import * as FileSystem from 'expo-file-system';
+import { useStorage } from '../contexts/storage-context';
 
 export default function GeneratePDFScreen() {
   const router = useRouter();
@@ -25,6 +26,7 @@ export default function GeneratePDFScreen() {
   const [isAddFolderVisible, setIsAddFolderVisible] = useState(false);
   const { tempAssessment } = useAssessment();
   const [isSaving, setIsSaving] = useState(false);
+  const storage = useStorage();
 
   useFocusEffect(
     React.useCallback(() => {
@@ -52,20 +54,12 @@ export default function GeneratePDFScreen() {
 
     try {
       const tempData = await AsyncStorage.getItem('tempAssessment');
-      console.log('Raw temp data:', tempData);
-      
       if (!tempData) {
         Alert.alert('Error', 'Assessment data not found');
         return;
       }
 
       const assessmentData = JSON.parse(tempData);
-      console.log('Parsed assessment data:', {
-        activity: assessmentData.activity,
-        hazardsCount: assessmentData.hazardsWithFinalRisk?.length,
-        fullHazards: assessmentData.hazardsWithFinalRisk,
-      });
-      
       const assessment: Assessment = {
         id: Date.now().toString(),
         name: assessmentName.trim(),
@@ -75,58 +69,29 @@ export default function GeneratePDFScreen() {
         folderId: String(selectedFolderId).trim(),
       };
 
-      console.log('Final formatted assessment:', assessment);
-
       // Generate and save PDF
       const pdfPath = await generatePDFContent(assessment);
-      console.log('Generated PDF path:', pdfPath);
       
-      // Check if PDF exists
-      const pdfExists = await FileSystem.getInfoAsync(pdfPath);
-      if (!pdfExists.exists) {
-        throw new Error('PDF generation failed - File not found');
-      }
-
-      // Verify file size to ensure it's not empty
-      if (pdfExists.size === 0) {
-        await FileSystem.deleteAsync(pdfPath);
-        throw new Error('PDF generation failed - File is empty');
-      }
-
-      // Continue with saving to storage
-      const storedAssessments = await AsyncStorage.getItem('assessments');
-      const assessments: Assessment[] = storedAssessments ? JSON.parse(storedAssessments) : [];
-      const updatedAssessments = [...assessments, { ...assessment, htmlPath: pdfPath }];
-      
-      console.log('Saving to AsyncStorage:', {
-        totalAssessments: updatedAssessments.length,
-        newAssessment: { ...assessment, htmlPath: pdfPath }
+      // Save assessment using storage service
+      await storage.saveAssessment({ 
+        ...assessment, 
+        htmlPath: pdfPath 
       });
-      const { exists } = await FileSystem.getInfoAsync(pdfPath);
-      if (!exists) {
-        console.error('PDF file not found at path:', pdfPath);
-      }
 
-      console.log('PDF Path:', pdfPath);
-
-
-      await AsyncStorage.setItem('assessments', JSON.stringify(updatedAssessments));
-
-      // First clear the temp data
+      // Clear temp data
       await AsyncStorage.removeItem('tempAssessment');
       await resetAssessment();
       
       setAssessmentName('');
       setSelectedFolderId('');
 
-      // Then navigate with a small delay to ensure state updates are complete
       setTimeout(() => {
         router.push({
           pathname: '/records/folder',
           params: {
             folderId: selectedFolderId,
             folderName: folders.find(f => f.id === selectedFolderId)?.name,
-            refresh: Date.now().toString() // Convert to string to ensure param change
+            refresh: Date.now().toString()
           }
         });
       }, 100);
