@@ -2,37 +2,42 @@ import React from 'react';
 import { View, TextInput, StyleSheet } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 
-interface SearchBarProps {
+export interface SearchBarProps {
   value: string;
   onChangeText: (text: string) => void;
+  placeholder?: string;
 }
 
-export function SearchBar({ value, onChangeText }: SearchBarProps) {
+export function SearchBar({ value, onChangeText, placeholder = 'Search...' }: SearchBarProps) {
   return (
-    <View style={styles.searchBar}>
-      <FontAwesome name="bars" size={20} color="gray" />
+    <View style={styles.container}>
+      <FontAwesome name="search" size={20} color="#666" style={styles.icon} />
       <TextInput
-        style={styles.searchInput}
-        placeholder="Search report"
+        style={styles.input}
         value={value}
         onChangeText={onChangeText}
+        placeholder={placeholder}
+        placeholderTextColor="#666"
       />
-      <FontAwesome name="search" size={20} color="gray" />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  searchBar: {
+  container: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: 'white',
     borderRadius: 8,
     margin: 16,
-    padding: 8,
+    paddingHorizontal: 12,
   },
-  searchInput: {
+  icon: {
+    marginRight: 8,
+  },
+  input: {
     flex: 1,
-    marginHorizontal: 8,
+    paddingVertical: 12,
+    fontSize: 16,
   },
 });

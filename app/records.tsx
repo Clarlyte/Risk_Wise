@@ -18,27 +18,33 @@ export default function RecordsScreen() {
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
   const { folders, addFolder, deleteFolder, updateFolder, loadFolders } = useFolders();
 
-  // Reload folders when screen comes into focus
+  // Keep only this effect
   useFocusEffect(
     React.useCallback(() => {
       loadFolders();
-    }, [])
+    }, [loadFolders])
   );
 
-  // Add an effect to reload folders when they change
-  useEffect(() => {
-    loadFolders();
-  }, [folders]); // This will trigger when folders state changes
-
   const handleAddFolder = async (name: string) => {
-    await addFolder(name);
-    loadFolders(); // Reload immediately after adding
+    try {
+      await addFolder(name);
+      await loadFolders(); // Reload after adding
+    } catch (error) {
+      console.error('Error adding folder:', error);
+      Alert.alert('Error', 'Failed to add folder');
+    }
   };
 
-  const handleEditSubmit = (newName: string) => {
+  const handleEditSubmit = async (newName: string) => {
     if (!selectedFolderId) return;
-    updateFolder(selectedFolderId, newName);
-    setSelectedFolderId(null);
+    try {
+      await updateFolder(selectedFolderId, newName);
+      await loadFolders(); // Reload after updating
+      setSelectedFolderId(null);
+    } catch (error) {
+      console.error('Error updating folder:', error);
+      Alert.alert('Error', 'Failed to update folder');
+    }
   };
 
   const handleDeleteFolder = async (id: string) => {
@@ -51,8 +57,13 @@ export default function RecordsScreen() {
           text: 'Delete',
           style: 'destructive',
           onPress: async () => {
-            await deleteFolder(id);
-            loadFolders(); // Reload immediately after deletion
+            try {
+              await deleteFolder(id);
+              await loadFolders(); // Reload after deleting
+            } catch (error) {
+              console.error('Error deleting folder:', error);
+              Alert.alert('Error', 'Failed to delete folder');
+            }
           },
         },
       ]

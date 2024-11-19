@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, Modal, FlatList, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, Modal, FlatList, StyleSheet, StyleProp, ViewStyle } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 interface DropdownOption {
@@ -9,13 +9,13 @@ interface DropdownOption {
 
 interface DropdownProps {
   label: string;
-  data: DropdownOption[];
+  data: Array<{ label: string; value: string | number }>;
   value: string | number;
   onChange: (value: string | number) => void;
-  style?: object;
+  containerStyle?: StyleProp<ViewStyle>;
 }
 
-export function CustomDropdown({ label, data, value, onChange, style }: DropdownProps) {
+export function CustomDropdown({ label, data, value, onChange, containerStyle }: DropdownProps) {
   const [isVisible, setIsVisible] = useState(false);
 
   const getSelectedLabel = () => {
@@ -24,7 +24,7 @@ export function CustomDropdown({ label, data, value, onChange, style }: Dropdown
   };
 
   return (
-    <View style={[styles.container, style]}>
+    <View style={[styles.container, containerStyle]}>
       <Text style={styles.label}>{label}:</Text>
       <TouchableOpacity 
         style={styles.dropdownButton}
