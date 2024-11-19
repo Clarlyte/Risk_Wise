@@ -24,4 +24,5 @@ export interface HazardWithFinalRisk extends HazardWithControls {
   finalLikelihood: number;
   finalSeverity: number;
   finalRiskScore: number;
+  dueDate: string;
 }

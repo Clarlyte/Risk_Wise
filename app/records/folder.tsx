@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, Alert, Modal, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Stack, useRouter, useLocalSearchParams } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -22,6 +22,10 @@ export default function FolderScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const storage = useStorage();
   const [sharingId, setSharingId] = useState<string | null>(null);
+  const [isShareInputVisible, setIsShareInputVisible] = useState(false);
+  const [shareId, setShareId] = useState('');
+  const [encryptionKey, setEncryptionKey] = useState('');
+  const [isProcessingShare, setIsProcessingShare] = useState(false);
 
   const loadAssessments = useCallback(async () => {
     if (!folderId) return;
@@ -175,15 +179,19 @@ export default function FolderScreen() {
         7 // 7 days expiry
       );
 
-      // Create sharing message with links
+      // Create a more practical sharing message
       const shareMessage = 
-        `RiskWise Assessment: ${assessment.name}\n\n` +
-        `View Assessment:\n` +
-        `https://riskwise.app/shared/${shareId}/view\n\n` +
-        `Download Assessment:\n` +
-        `https://riskwise.app/shared/${shareId}/download\n\n` +
+        `RiskWise Assessment Share\n\n` +
+        `Assessment Name: ${assessment.name}\n` +
+        `Activity: ${assessment.activity}\n` +
+        `Date: ${new Date(assessment.date).toLocaleDateString()}\n\n` +
+        `To access this assessment in RiskWise app:\n\n` +
+        `1. Open RiskWise app\n` +
+        `2. Go to "Shared With Me" section\n` +
+        `3. Enter these details:\n\n` +
+        `Share ID: ${shareId}\n` +
         `Encryption Key: ${encryptionKey}\n\n` +
-        `Note: These links will expire in 7 days.`;
+        `Note: This share will expire in 7 days.`;
 
       // Show share dialog
       const result = await Share.share({
@@ -193,6 +201,7 @@ export default function FolderScreen() {
 
       if (result.action === Share.sharedAction) {
         console.log('Successfully shared assessment');
+        Alert.alert('Success', 'Assessment shared successfully');
       }
     } catch (error) {
       console.error('Error sharing assessment:', error);
@@ -203,6 +212,82 @@ export default function FolderScreen() {
     } finally {
       setSharingId(null);
     }
+  };
+
+  const handleAccessShared = async () => {
+    if (!shareId.trim() || !encryptionKey.trim()) {
+      Alert.alert('Error', 'Please enter both Share ID and Encryption Key');
+      return;
+    }
+
+    setIsProcessingShare(true);
+    try {
+      // Download the shared assessment
+      const assessment = await storage.getSharedAssessment(
+        shareId.trim(),
+        encryptionKey.trim()
+      );
+
+      if (!assessment) {
+        throw new Error('Assessment not found or expired');
+      }
+
+      // Modify the assessment to be in the current folder
+      const modifiedAssessment = {
+        ...assessment,
+        folderId: String(folderId).trim()
+      };
+
+      // Save the assessment
+      await storage.saveAssessment(modifiedAssessment);
+
+      // Clear inputs and close modal
+      setShareId('');
+      setEncryptionKey('');
+      setIsShareInputVisible(false);
+
+      // Reload assessments
+      await loadAssessments();
+
+      Alert.alert('Success', 'Assessment added to folder successfully');
+    } catch (error) {
+      console.error('Error accessing shared assessment:', error);
+      Alert.alert(
+        'Error',
+        error instanceof Error 
+          ? error.message 
+          : 'Failed to access shared assessment'
+      );
+    } finally {
+      setIsProcessingShare(false);
+    }
+  };
+
+  const handleDelete = async (assessment: Assessment) => {
+    Alert.alert(
+      'Delete Assessment',
+      'Are you sure you want to delete this assessment? This action cannot be undone.',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel'
+        },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await storage.deleteAssessment(assessment.id);
+              await loadAssessments(); // Refresh the list
+              Alert.alert('Success', 'Assessment deleted successfully');
+            } catch (error) {
+              console.error('Error deleting assessment:', error);
+              Alert.alert('Error', 'Failed to delete assessment');
+            }
+          }
+        }
+      ]
+    );
   };
 
   const renderAssessmentItem = ({ item }: { item: Assessment }) => (
@@ -243,6 +328,13 @@ export default function FolderScreen() {
             </>
           )}
         </TouchableOpacity>
+        <TouchableOpacity 
+          style={styles.actionButton}
+          onPress={() => handleDelete(item)}
+        >
+          <FontAwesome5 name="trash-alt" size={20} color="#FF3B30" />
+          <Text style={[styles.actionButtonText, styles.deleteButtonText]}>Delete</Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -255,7 +347,6 @@ export default function FolderScreen() {
         <Header 
           title={folderName as string}
           onBackPress={handleBack}
-          onSettingsPress={() => {}}
         />
 
         <SearchBar
@@ -270,6 +361,7 @@ export default function FolderScreen() {
         ) : (
           <FlatList
             style={styles.list}
+            contentContainerStyle={styles.listContent}
             data={filteredAssessments}
             renderItem={renderAssessmentItem}
             keyExtractor={item => item.id}
@@ -282,6 +374,80 @@ export default function FolderScreen() {
             }
           />
         )}
+
+        <TouchableOpacity 
+          style={styles.fab}
+          onPress={() => setIsShareInputVisible(true)}
+        >
+          <FontAwesome5 name="folder-plus" size={24} color="white" />
+        </TouchableOpacity>
+
+        <Modal
+          visible={isShareInputVisible}
+          transparent
+          animationType="slide"
+          onRequestClose={() => setIsShareInputVisible(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+              <Text style={styles.modalTitle}>Access Shared Assessment</Text>
+              <Text style={styles.modalDescription}>
+                Enter the Share ID and Encryption Key to add the assessment to this folder.
+              </Text>
+
+              <View style={styles.inputContainer}>
+                <Text style={styles.label}>Share ID</Text>
+                <TextInput
+                  style={styles.input}
+                  value={shareId}
+                  onChangeText={setShareId}
+                  placeholder="Enter Share ID"
+                  placeholderTextColor="#666"
+                  editable={!isProcessingShare}
+                />
+              </View>
+
+              <View style={styles.inputContainer}>
+                <Text style={styles.label}>Encryption Key</Text>
+                <TextInput
+                  style={styles.input}
+                  value={encryptionKey}
+                  onChangeText={setEncryptionKey}
+                  placeholder="Enter Encryption Key"
+                  placeholderTextColor="#666"
+                  editable={!isProcessingShare}
+                />
+              </View>
+
+              <View style={styles.modalButtons}>
+                <TouchableOpacity
+                  style={[styles.modalButton, styles.cancelButton]}
+                  onPress={() => setIsShareInputVisible(false)}
+                  disabled={isProcessingShare}
+                >
+                  <Text style={styles.buttonText}>Cancel</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[
+                    styles.modalButton,
+                    styles.accessButton,
+                    (!shareId.trim() || !encryptionKey.trim() || isProcessingShare) && 
+                    styles.disabledButton
+                  ]}
+                  onPress={handleAccessShared}
+                  disabled={!shareId.trim() || !encryptionKey.trim() || isProcessingShare}
+                >
+                  {isProcessingShare ? (
+                    <ActivityIndicator size="small" color="white" />
+                  ) : (
+                    <Text style={styles.buttonText}>Add to Folder</Text>
+                  )}
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
       </View>
     </SafeAreaView>
   );
@@ -299,6 +465,9 @@ const styles = StyleSheet.create({
   list: {
     flex: 1,
     backgroundColor: '#F2F1F9',
+  },
+  listContent: {
+    paddingBottom: 120,
   },
   assessmentItem: {
     backgroundColor: 'white',
@@ -349,5 +518,95 @@ const styles = StyleSheet.create({
   },
   actionButtonDisabled: {
     opacity: 0.5,
+  },
+  fab: {
+    position: 'absolute',
+    bottom: 100,
+    right: 20,
+    backgroundColor: '#FC7524',
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 6,
+    zIndex: 1000,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  modalContent: {
+    backgroundColor: 'white',
+    borderRadius: 12,
+    padding: 20,
+    width: '100%',
+    maxWidth: 400,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 10,
+    textAlign: 'center',
+  },
+  modalDescription: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  inputContainer: {
+    marginBottom: 16,
+  },
+  label: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    marginBottom: 8,
+    color: '#333',
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 16,
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 10,
+  },
+  modalButton: {
+    flex: 1,
+    padding: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  cancelButton: {
+    backgroundColor: '#ddd',
+  },
+  accessButton: {
+    backgroundColor: '#1294D5',
+  },
+  disabledButton: {
+    opacity: 0.5,
+  },
+  buttonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  deleteButtonText: {
+    color: '#FF3B30', // Red color for delete button
   },
 }); 

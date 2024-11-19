@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 import { Assessment } from '../types/pdf';
 import * as Crypto from 'expo-crypto';
 import { generatePDFContent } from '../utils/pdfGenerator';
+import * as FileSystem from 'expo-file-system';
 
 const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
 const supabaseKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
@@ -244,6 +245,38 @@ export class HybridStorageService {
       };
     } catch (error) {
       console.error('Error in createShareableAssessment:', error);
+      throw error;
+    }
+  }
+
+  async deleteAssessment(assessmentId: string): Promise<void> {
+    try {
+      // Delete from local storage
+      const assessments = await this.getLocalAssessments();
+      const assessment = assessments.find(a => a.id === assessmentId);
+      
+      if (!assessment) {
+        throw new Error('Assessment not found');
+      }
+
+      // Delete PDF file if it exists
+      if (assessment.htmlPath) {
+        await FileSystem.deleteAsync(assessment.htmlPath, { idempotent: true });
+      }
+
+      // Update local storage
+      const updatedAssessments = assessments.filter(a => a.id !== assessmentId);
+      await AsyncStorage.setItem('assessments', JSON.stringify(updatedAssessments));
+
+      // Delete from cloud if enabled
+      if (this.isCloudEnabled) {
+        await supabase
+          .from('assessments')
+          .delete()
+          .eq('id', assessmentId);
+      }
+    } catch (error) {
+      console.error('Error deleting assessment:', error);
       throw error;
     }
   }

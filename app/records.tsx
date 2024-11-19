@@ -59,10 +59,6 @@ export default function RecordsScreen() {
     );
   };
 
-  const shareFolder = (id: string) => {
-    Alert.alert('Share', 'Sharing functionality to be implemented');
-  };
-
   const editFolderName = (id: string) => {
     setSelectedFolderId(id);
     setIsEditDialogVisible(true);
@@ -76,11 +72,8 @@ export default function RecordsScreen() {
         <TouchableOpacity onPress={() => editFolderName(item.id)}>
           <FontAwesome5 name="edit" size={20} color="#1294D5" />
         </TouchableOpacity>
-        <TouchableOpacity onPress={() => shareFolder(item.id)}>
-          <FontAwesome5 name="share-alt" size={20} color="#1294D5" />
-        </TouchableOpacity>
         <TouchableOpacity onPress={() => handleDeleteFolder(item.id)}>
-          <FontAwesome5 name="trash-alt" size={20} color="#1294D5" />
+          <FontAwesome5 name="trash-alt" size={20} color="#FF3B30" />
         </TouchableOpacity>
       </View>
     </View>
@@ -170,7 +163,8 @@ const styles = StyleSheet.create({
   folderActions: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    width: 100,
+    width: 70,
+    gap: 16,
   },
   emptyText: {
     textAlign: 'center',
