@@ -150,7 +150,11 @@ export function HazardsSection({ searchQuery, selectedAssessment }: HazardsSecti
 
       <ScrollView style={styles.hazardsList} contentContainerStyle={styles.hazardsContent}>
         {filteredHazards.length > 0 ? (
-          filteredHazards.map((hazard) => renderHazardItem({ item: hazard }))
+          filteredHazards.map((hazard) => (
+            <View key={hazard.id}>
+              {renderHazardItem({ item: hazard })}
+            </View>
+          ))
         ) : (
           <Text style={styles.noDataText}>No hazards found</Text>
         )}
